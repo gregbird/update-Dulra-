@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dulra - Ecological Reporting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              primary: '#A4C8FD', // Primary Blue
+              secondary: '#122529', // Background Dark
+              accent: '#FB923C',   // Orange for actions
+              background: '#F3F7F9', // Background Light
+              surface: '#FFFFFF',
+            },
+          }
+        }
+      }
+    </script>
+    <style>
+        .view { display: none; }
+        .active-view { display: block; }
+        body { background-color: #F3F7F9; font-family: 'Inter', sans-serif; }
+        .eiar-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s ease-in-out;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+        .eiar-textarea:focus {
+            outline: 2px solid #FB923C;
+            border-color: #FB923C;
+            box-shadow: 0 0 0 1px #FB923C;
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateX(calc(100% + 2rem));
+            transition: transform 0.3s ease-in-out;
+            z-index: 100;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #122529;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-secondary">
+
+    <!-- Main Application Layout -->
+    <div class="flex h-screen bg-background">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-surface flex flex-col border-r border-gray-200">
+            <div class="flex items-center space-x-2 p-4 border-b border-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary"><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/><path d="M12 12a10 10 0 0 0 5-8.66"/><path d="M12 12a10 10 0 0 1 5 8.66"/></svg>
+                <h1 class="text-2xl font-bold text-secondary">Dulra</h1>
+            </div>
+            <nav class="p-4 flex-1">
+                <button onclick="showView('survey-template-view')" class="w-full bg-primary text-secondary py-2.5 px-4 rounded-md hover:brightness-95 flex items-center space-x-2 justify-center text-sm font-semibold">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <span>Create a Survey</span>
+                </button>
+                <div class="mt-6">
+                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Workspace</h3>
+                    <div class="mt-2 space-y-1">
+                         <button onclick="showView('dashboard-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                            <span>Dashboard</span>
+                        </button>
+                        <button onclick="showView('my-surveys-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                             <i data-lucide="folder" class="w-5 h-5"></i>
+                            <span>My Surveys</span>
+                        </button>
+                    </div>
+                </div>
+                 <div class="mt-6">
+                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</h3>
+                    <div class="mt-2 space-y-1">
+                        <button onclick="showView('gis-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="map" class="w-5 h-5"></i>
+                            <span>GIS Integration</span>
+                        </button>
+                        <button onclick="showView('datamine-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="database" class="w-5 h-5"></i>
+                            <span>Data Mine</span>
+                        </button>
+                        <button onclick="showView('field-survey-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                            <span>Field Survey</span>
+                        </button>
+                        <button onclick="showView('team-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            <span>Team Members</span>
+                        </button>
+                        <button onclick="showView('impact-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="calculator" class="w-5 h-5"></i>
+                            <span>Impact Calculation</span>
+                        </button>
+                        <button onclick="showView('reporting-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                            <span>Intelligent Reporting</span>
+                        </button>
+                        <button onclick="showView('visualisation-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                            <span>Visualisation</span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto">
+            <div id="app-container" class="max-w-7xl mx-auto">
+                
+                <!-- NEW Dashboard View -->
+                <div id="dashboard-view" class="view active-view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary mb-6">Dashboard</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Top Row Charts -->
+                        <div class="bg-surface p-6 rounded-lg shadow-md">
+                             <h3 class="font-semibold text-secondary">EU Restoration Targets</h3>
+                             <canvas id="restoration-chart"></canvas>
+                        </div>
+                         <div class="bg-surface p-6 rounded-lg shadow-md">
+                             <h3 class="font-semibold text-secondary">Action Status</h3>
+                             <canvas id="actions-chart"></canvas>
+                        </div>
+                         <div class="bg-surface p-6 rounded-lg shadow-md">
+                             <h3 class="font-semibold text-secondary">Assessment Status</h3>
+                             <canvas id="surveys-chart"></canvas>
+                        </div>
+
+                        <!-- Conservation Status Section -->
+                        <div class="lg:col-span-3 bg-surface p-6 rounded-lg shadow-md">
+                             <h3 class="text-xl font-bold text-secondary mb-4">Conservation Status</h3>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <!-- SPA Column -->
+                                <div>
+                                    <h4 class="font-semibold text-center mb-2">Health of SPA's</h4>
+                                    <div class="bg-blue-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-blue-800">Habitats</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Area: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Structure & Functions: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
+                                        </ul>
+                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Population: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Habitat for Species: Bad</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <!-- SAC Column -->
+                                 <div>
+                                    <h4 class="font-semibold text-center mb-2">Health of SAC's</h4>
+                                    <div class="bg-blue-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-blue-800">Habitats</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Area: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Structure & Functions: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Future Prospects: Favourable</li>
+                                        </ul>
+                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Population: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Habitat for Species: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                 <!-- NHA Column -->
+                                 <div>
+                                    <h4 class="font-semibold text-center mb-2">Health of NHA's</h4>
+                                    <div class="bg-blue-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-blue-800">Habitats</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Range: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Area: Bad</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Structure & Functions: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Future Prospects: Bad</li>
+                                        </ul>
+                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
+                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Population: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Habitat for Species: Inadequate</li>
+                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Future Prospects: Bad</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- Lists Section -->
+                        <div class="lg:col-span-3 bg-surface p-6 rounded-lg shadow-md">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-xl font-bold text-secondary mb-4">Conservation Assessments</h3>
+                                    <div class="h-64 overflow-y-auto pr-2">
+                                        <table class="w-full text-left text-sm">
+                                            <thead class="bg-gray-50 sticky top-0">
+                                                <tr>
+                                                    <th class="p-2 font-semibold">Site Name</th>
+                                                    <th class="p-2 font-semibold">Status</th>
+                                                    <th class="p-2 font-semibold">County</th>
+                                                    <th class="p-2 font-semibold text-right">Area (ha)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="assessments-table" class="divide-y divide-gray-200"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                 <div>
+                                    <h3 class="text-xl font-bold text-secondary mb-4">Conservation Actions</h3>
+                                     <div class="h-64 overflow-y-auto pr-2">
+                                        <table class="w-full text-left text-sm">
+                                            <thead class="bg-gray-50 sticky top-0">
+                                                <tr>
+                                                    <th class="p-2 font-semibold">Site Name</th>
+                                                    <th class="p-2 font-semibold">Status</th>
+                                                    <th class="p-2 font-semibold">Action Type</th>
+                                                    <th class="p-2 font-semibold">County</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="actions-table" class="divide-y divide-gray-200"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Survey Template Selection View -->
+                <div id="survey-template-view" class="view p-4 md:p-8">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-secondary">Start a New Survey</h2>
+                        <p class="text-gray-500 mt-1">Select a compliant template to begin your report.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Survey templates will be injected here -->
+                    </div>
+                </div>
+
+                <!-- My Surveys View -->
+                <div id="my-surveys-view" class="view p-4 md:p-8">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-3xl font-bold text-secondary">My Surveys</h2>
+                            <p class="text-gray-500">An overview of all your active and completed surveys.</p>
+                        </div>
+                         <button onclick="showView('survey-template-view')" class="bg-primary text-secondary py-2 px-4 rounded-md hover:brightness-95 flex items-center space-x-2 w-full md:w-auto">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                            <span>Create New Survey</span>
+                        </button>
+                    </div>
+                     <div id="project-list" class="space-y-4">
+                        <!-- Survey/Project cards will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Project Detail View -->
+                <div id="project-detail-view" class="view p-4 md:p-8">
+                    <button onclick="showView('my-surveys-view')" class="text-sm text-accent mb-4 flex items-center space-x-1">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Back to My Surveys</span>
+                    </button>
+                    <div class="bg-surface p-6 rounded-lg shadow-md">
+                        <div class="mb-6">
+                            <h2 id="project-title" class="text-3xl font-bold text-secondary"></h2>
+                            <p id="project-client" class="text-lg text-gray-500"></p>
+                            <span id="project-code" class="text-sm bg-gray-200 text-gray-600 px-2 py-1 rounded-full"></span>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav id="project-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                <!-- Tab buttons will be injected here -->
+                            </nav>
+                        </div>
+                        <div id="project-tab-content" class="pt-6">
+                            <!-- Content for tabs will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EIAR Editor View -->
+                <div id="eiar-editor-view" class="view p-4 md:p-8">
+                    <div class="sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-8 px-8 flex justify-between items-center border-b border-gray-200">
+                        <div>
+                            <h2 class="text-2xl font-bold text-secondary">Ecological Impact Assessment Report (EIAR) Editor</h2>
+                            <p id="eiar-editor-project-name" class="text-gray-500 mt-1"></p>
+                        </div>
+                        <button onclick="saveEiarSurvey()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Save and Continue</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                        
+                        <!-- Chapter 1 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 1: Introduction</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Provide an overview of the project, its location, and the purpose of the EIAR..."></textarea>
+                        </div>
+
+                        <!-- Chapter 2 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 2: Background & Need for the Project</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Explain why the project is needed, its objectives, and the context within national or regional policy..."></textarea>
+                        </div>
+
+                        <!-- Chapter 3 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 3: Consideration of Reasonable Alternatives</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Describe the main alternatives studied (e.g., alternative sites, technologies, or designs) and the reasons for the chosen option..."></textarea>
+                        </div>
+                        
+                        <!-- Chapter 4 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 4: Description of the Proposed Development</h3>
+                            <textarea class="eiar-textarea mt-2" rows="8" placeholder="Provide a detailed description of the physical characteristics of the whole project, including land use requirements during construction and operational phases..."></textarea>
+                        </div>
+
+                        <!-- Chapter 5 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 5: Population & Human Health</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess the potential impacts on local communities, land use, amenities, and human health..."></textarea>
+                        </div>
+                        
+                        <!-- Chapter 6 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 6: Biodiversity (Ecology)</h3>
+                            <div class="mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">6.1 Introduction & Methodology</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="5">This chapter presents the Ecological Impact Assessment (EcIA). The assessment identifies, quantifies, and evaluates the potential effects of the project on habitats, species, and ecosystems, referred to as Key Ecological Receptors (KERs). The methodology follows the Guidelines for Ecological Impact Assessment in the UK and Ireland from the Chartered Institute of Ecology and Environmental Management (CIEEM) and guidance from the Environmental Protection Agency (EPA).</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">6.2 Desk Study</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="4">A comprehensive desk study was undertaken to identify ecological features within a 10km radius of the site. This involved consulting: National Parks and Wildlife Service (NPWS) for records of protected species and designated sites (Special Areas of Conservation, Special Protection Areas), National Biodiversity Data Centre, and planning authority databases for other developments to assess cumulative impacts.</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">6.3 Field Surveys</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="6">Field surveys were conducted to establish the baseline ecological conditions. Habitat Surveys: Habitats across the site were mapped to identify their ecological value and potential for loss or degradation. Surveys included detailed peatland assessments to inform site design and avoid sensitive areas. Protected Mammal Surveys: Targeted surveys were conducted for legally protected species potentially present, including otter and badger. Bat Surveys: Surveys followed Bat Conservation Ireland guidelines. Methodologies included Roost Surveys (all structures and mature trees within 200m inspected) and Activity Surveys (static detectors and transects across spring, summer, and autumn).</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">6.4 Impact Assessment & Mitigation</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="5">Potential Impacts: The assessment identified potential impacts, including direct habitat loss from turbine foundations and access tracks, and collision risk for bats. Mitigation: To mitigate collision risk for high-risk bat species (e.g., Leisler's bat, pipistrelles), a turbine curtailment strategy is proposed. This involves feathering the blades (stopping rotation) during high-risk periods, such as summer and autumn nights with low wind speeds and temperatures above 10°C.</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chapter 7 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 7: Ornithology</h3>
+                            <div class="mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">7.1 Introduction & Methodology</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="4">This chapter assesses the potential impacts on bird populations. While there is no specific national guidance in Ireland, the methodologies used follow the standards developed by NatureScot (formerly SNH), which are widely accepted as best practice by Irish competent authorities.</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">7.2 Field Surveys</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="6">A multi-season survey programme was undertaken over two years to establish a robust baseline. Vantage Point (VP) Surveys: Timed watches were conducted from fixed VPs to record the flight activity of target species (e.g., Hen Harrier, Kestrel, Golden Plover). A minimum of 36 hours of observation per VP per season was completed. Breeding & Wintering Bird Surveys: Walkover surveys were conducted to map territories and estimate populations. Specialist Surveys: Targeted surveys for species of high conservation concern, such as Hen Harrier, were undertaken.</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">7.3 Impact Assessment & Mitigation</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="5">Potential Impacts: The primary potential impacts assessed were displacement (disturbance) and collision mortality. Collision risk was quantified using the NatureScot Collision Risk Model (CRM). Mitigation: The wind farm layout was designed iteratively to avoid known sensitive areas, such as Hen Harrier nesting sites. Habitat management plans are proposed to enhance foraging habitat for key species away from the turbines.</textarea>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">7.4 Post-Construction Monitoring</h4>
+                                    <textarea class="eiar-textarea mt-2" rows="5">A Bird Monitoring Programme is proposed for the operational phase, often for years 1, 2, 3, 5, 10, and 15. This will include repeating breeding and wintering bird surveys and systematic carcass searches to validate the predictions of the collision risk model.</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Other Chapters as textareas -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 8: Land, Soils & Geology</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Describe the baseline conditions and assess impacts on soil, geology, and land use..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 9: Water (Hydrology & Hydrogeology)</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess impacts on surface water and groundwater quality and resources..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 10: Air & Climate</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess impacts on air quality (e.g., from dust during construction) and climate (e.g., greenhouse gas emissions)..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 11: Noise & Vibration</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess noise and vibration impacts during construction and operation on nearby sensitive receptors..."></textarea>
+                        </div>
+                         <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 12: Landscape & Visual Impact</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess the effects of the development on the character of the landscape and on visual amenity..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 13: Cultural Heritage & Archaeology</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess impacts on archaeological sites, historic buildings, and the cultural heritage landscape..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 14: Material Assets</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess impacts on material assets such as agriculture, forestry, tourism, traffic, and telecommunications..."></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Chapter 15: Interactions & Cumulative Effects</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="Assess the combined effects of different impacts from the project (interactions) and the combined effects with other existing or planned developments (cumulative effects)..."></textarea>
+                        </div>
+                         <div>
+                            <h3 class="text-xl font-bold text-secondary">Volume 3: Appendices</h3>
+                            <textarea class="eiar-textarea mt-2" rows="6" placeholder="List all supporting technical data, including: full survey results, raw data, Collision Risk Modelling reports, figures and maps, and a standalone Natura Impact Statement (NIS)..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Placeholder Feature Views -->
+                <div id="gis-view" class="view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary">GIS Integration</h2>
+                    <p class="text-gray-500 mt-1">Connect to your preferred GIS tool to import site boundaries.</p>
+                    
+                    <!-- Initial GIS Choices -->
+                    <div id="gis-initial-choice" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- ArcGIS Card -->
+                        <div onclick="showArcGisOptions()" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/ArcGIS_logo.png/220px-ArcGIS_logo.png" alt="ArcGIS Logo" class="h-16 mb-4">
+                            <h3 class="font-bold text-lg text-secondary">ArcGIS</h3>
+                            <p class="text-sm text-gray-500 mt-1">Connect to the Esri Geospatial Cloud.</p>
+                        </div>
+                        <!-- QGIS Card -->
+                        <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/QGIS_Logo_new.svg/200px-QGIS_Logo_new.svg.png" alt="QGIS Logo" class="h-16 mb-4">
+                            <h3 class="font-bold text-lg text-secondary">QGIS</h3>
+                            <p class="text-sm text-gray-500 mt-1">Connect using the open-source GIS leader.</p>
+                        </div>
+                        <!-- Another GIS Card -->
+                        <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                             <i data-lucide="upload-cloud" class="w-16 h-16 text-accent mb-4"></i>
+                            <h3 class="font-bold text-lg text-secondary">Another GIS</h3>
+                            <p class="text-sm text-gray-500 mt-1">Import from a shapefile or other common formats.</p>
+                        </div>
+                    </div>
+
+                    <!-- ArcGIS Specific Options (Initially Hidden) -->
+                    <div id="gis-arcgis-options" class="hidden mt-6">
+                        <button onclick="showInitialGisChoice()" class="text-sm text-accent mb-4 flex items-center space-x-1">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                            <span>Back to GIS Options</span>
+                        </button>
+                        <h3 class="text-2xl font-bold text-gray-700 mb-4">Select ArcGIS Product</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                             <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
+                                <h3 class="font-bold text-lg text-secondary">ArcGIS Location Platform</h3>
+                                <p class="text-sm text-gray-500 mt-1">For developers using APIs and location services.</p>
+                            </div>
+                            <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
+                                <h3 class="font-bold text-lg text-secondary">ArcGIS Online</h3>
+                                <p class="text-sm text-gray-500 mt-1">Connect to your cloud-based mapping and analysis solution.</p>
+                            </div>
+                            <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
+                                <h3 class="font-bold text-lg text-secondary">ArcGIS Enterprise</h3>
+                                <p class="text-sm text-gray-500 mt-1">Connect to your organization's self-hosted portal.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="datamine-view" class="view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary">Data Mine</h2>
+                    <p class="text-gray-500 mt-1">Collate and layer data from various external sources for your desk study.</p>
+                    
+                    <div id="datamine-search-container" class="mt-6 bg-surface p-6 rounded-lg shadow-md">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-2">
+                                <label for="site-reference" class="block text-sm font-medium text-gray-700">Site Name / Reference / Code</label>
+                                <input type="text" id="site-reference" value="Ballycroy Wind Farm" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="performDataMineSearch()" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center justify-center space-x-2">
+                                    <i data-lucide="search" class="w-5 h-5"></i>
+                                    <span>Search for Records</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="datamine-results-container" class="hidden mt-8">
+                         <div id="datamine-loading" class="hidden flex justify-center items-center py-10">
+                            <div class="loading-spinner"></div>
+                         </div>
+                        <div id="datamine-results-content">
+                            <h3 class="text-2xl font-bold text-gray-700 mb-4">Data Mine Results for "Ballycroy Wind Farm"</h3>
+                            <div class="space-y-6">
+                                <!-- Existing Reports -->
+                                <div class="bg-surface p-6 rounded-lg shadow-md">
+                                    <h4 class="font-semibold text-lg text-secondary">Existing Reports / Records</h4>
+                                    <ul class="list-disc list-inside mt-2 text-gray-600">
+                                        <li>Ballycroy Area Wind Feasibility Study (2021) - GreenEnergy Ltd.</li>
+                                        <li>NPWS Species Records for Grid Ref F890 105 (2019-2023)</li>
+                                    </ul>
+                                </div>
+                                <!-- Statutory Designations -->
+                                 <div class="bg-surface p-6 rounded-lg shadow-md">
+                                    <h4 class="font-semibold text-lg text-secondary">Statutory Designation Maps</h4>
+                                     <ul class="list-disc list-inside mt-2 text-gray-600">
+                                        <li>Owenduff/Nephin Complex SAC (Site Code: 000534) - Boundary 2.5km from site.</li>
+                                        <li>Slieve Fyagh Bog SAC (Site Code: 000542) - Boundary 8km from site.</li>
+                                    </ul>
+                                </div>
+                                 <!-- Historical Imagery -->
+                                 <div class="bg-surface p-6 rounded-lg shadow-md">
+                                    <h4 class="font-semibold text-lg text-secondary">Historical Aerial Imagery</h4>
+                                    <div class="mt-2 text-center">
+                                         <img src="https://placehold.co/600x300/e2e8f0/475569?text=Ortho-rectified+Aerial+Photo+2005" alt="Historical Map" class="w-full rounded-md">
+                                    </div>
+                                </div>
+                                 <!-- Key Data -->
+                                 <div class="bg-surface p-6 rounded-lg shadow-md">
+                                    <h4 class="font-semibold text-lg text-secondary">Key Data Identified</h4>
+                                    <p class="text-sm text-gray-500">Review the following data and select any to apply to your survey draft.</p>
+                                    <div class="mt-4 space-y-3">
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                            <div>
+                                                <p class="font-medium">Blanket Bog (PB2)</p>
+                                                <p class="text-xs text-gray-500">Classification: Ireland / EU</p>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <label for="habitat-1" class="text-sm mr-2">Use this data?</label>
+                                                <input id="habitat-1" type="checkbox" class="h-5 w-5 text-accent rounded border-gray-300 focus:ring-accent">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                            <div>
+                                                <p class="font-medium">Wet Heath (HH3)</p>
+                                                <p class="text-xs text-gray-500">Classification: Ireland / EU</p>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <label for="habitat-2" class="text-sm mr-2">Use this data?</label>
+                                                <input id="habitat-2" type="checkbox" class="h-5 w-5 text-accent rounded border-gray-300 focus:ring-accent">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end">
+                                 <button class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center justify-center space-x-2">
+                                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                    <span>Apply Selected Data to Survey</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="field-survey-view" class="view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary mb-1">Field Survey Editor</h2>
+                    <p class="text-gray-500 mb-6">Create and edit field survey templates and data.</p>
+                    <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                        <!-- Survey Details -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary border-b pb-2">Survey Details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                                <div>
+                                    <label for="survey-name" class="block text-sm font-medium text-gray-700">Survey Name</label>
+                                    <input type="text" id="survey-name" value="Phase 1 Habitat Survey" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="survey-date" class="block text-sm font-medium text-gray-700">Date</label>
+                                    <input type="date" id="survey-date" value="2025-09-23" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="surveyors" class="block text-sm font-medium text-gray-700">Surveyor(s)</label>
+                                    <input type="text" id="surveyors" value="Dr. Aoife Murphy" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Site Conditions -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary border-b pb-2">Site Conditions</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mt-4">
+                                <div>
+                                    <label for="condition-time" class="block text-sm font-medium text-gray-700">Time</label>
+                                    <input type="time" id="condition-time" value="10:30" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="condition-temp" class="block text-sm font-medium text-gray-700">Temp (°C)</label>
+                                    <input type="number" id="condition-temp" value="14" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="condition-wind" class="block text-sm font-medium text-gray-700">Wind</label>
+                                    <select id="condition-wind" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                        <option>Calm</option>
+                                        <option selected>Light Breeze</option>
+                                        <option>Moderate</option>
+                                        <option>Strong</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="condition-cloud" class="block text-sm font-medium text-gray-700">Cloud Cover</label>
+                                    <select id="condition-cloud" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                        <option>0%</option>
+                                        <option>25%</option>
+                                        <option selected>50%</option>
+                                        <option>75%</option>
+                                        <option>100%</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="condition-precip" class="block text-sm font-medium text-gray-700">Precipitation</label>
+                                     <select id="condition-precip" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                        <option selected>None</option>
+                                        <option>Drizzle</option>
+                                        <option>Rain</option>
+                                        <option>Heavy Rain</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Habitat Mapping -->
+                        <div>
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <h3 class="text-xl font-bold text-secondary">Habitat Mapping</h3>
+                                <button onclick="addHabitatEntry()" class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500 flex items-center space-x-1">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Add Entry</span>
+                                </button>
+                            </div>
+                            <div id="habitat-entries" class="mt-4 space-y-4">
+                                <!-- Dynamic habitat entries will be added here -->
+                            </div>
+                        </div>
+                        <!-- Fauna -->
+                        <div>
+                             <div class="flex justify-between items-center border-b pb-2">
+                                <h3 class="text-xl font-bold text-secondary">Fauna</h3>
+                                <button onclick="addFaunaSighting()" class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500 flex items-center space-x-1">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Add Sighting</span>
+                                </button>
+                            </div>
+                            <div id="fauna-entries" class="mt-4 space-y-4">
+                                <!-- Dynamic fauna entries will be added here -->
+                            </div>
+                        </div>
+                         <!-- Flora -->
+                        <div>
+                             <div class="flex justify-between items-center border-b pb-2">
+                                <h3 class="text-xl font-bold text-secondary">Flora</h3>
+                                <button onclick="addFloraRecord()" class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500 flex items-center space-x-1">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Add Record</span>
+                                </button>
+                            </div>
+                            <div id="flora-entries" class="mt-4 space-y-4">
+                                <!-- Dynamic flora entries will be added here -->
+                            </div>
+                        </div>
+                        <!-- Field Notes -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary border-b pb-2">Field Notes</h3>
+                            <textarea class="eiar-textarea mt-4" rows="8" placeholder="Enter general field notes, observations, or constraints..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                 <div id="team-view" class="view p-4 md:p-8">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                        <div>
+                             <h2 class="text-3xl font-bold text-secondary">Team Management</h2>
+                             <p class="text-gray-500 mt-1">Manage internal team members and assign tasks to third parties.</p>
+                        </div>
+                         <button onclick="showAssignToThirdPartyModal()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2 w-full md:w-auto">
+                            <i data-lucide="share-2" class="w-5 h-5"></i>
+                            <span>Assign to 3rd Party</span>
+                        </button>
+                    </div>
+
+                     <div class="bg-surface rounded-lg shadow-md">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Name</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Email</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Role</th>
+                                    <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="team-list" class="divide-y divide-gray-200">
+                                <!-- Team members will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div id="impact-view" class="view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary">Wind Farm Collision Risk Model</h2>
+                    <p class="text-gray-500 mt-1">Based on the Nature Scot (Band, 2007) standard for calculating avian collision risk.</p>
+                    
+                    <div id="impact-calculator-container" class="mt-6 bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                        <!-- Stage 1 & 2 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Stage 1 & 2: Bird Passage Rate</h3>
+                            <p class="text-sm text-gray-500 mt-1">Estimates the number of birds passing through the rotors annually based on field survey data.</p>
+                            <div class="mt-4 p-4 border rounded-md bg-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Target Species</label>
+                                    <input type="text" value="Hen Harrier" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Flights at Collision Height (from VP surveys)</label>
+                                    <input type="number" value="11" oninput="updateImpactCalculation()" id="crm-flights" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div class="col-span-1 md:col-span-2">
+                                     <label class="block text-sm font-medium text-gray-700">Total Vantage Point Watch Hours</label>
+                                    <input type="number" value="96" oninput="updateImpactCalculation()" id="crm-hours" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div class="col-span-1 md:col-span-2 bg-white p-3 rounded-md text-center">
+                                    <p class="text-sm text-gray-500">Estimated Annual Passages through Rotors</p>
+                                    <p id="crm-passages" class="text-2xl font-bold text-secondary">11.19</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stage 3 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Stage 3: Collision Probability</h3>
+                             <p class="text-sm text-gray-500 mt-1">Calculates the probability of a bird being hit during a single passage through a rotor.</p>
+                            <div class="mt-4 p-4 border rounded-md bg-gray-50 space-y-6">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Bird Parameters</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                        <div><label class="block text-xs font-medium text-gray-600">Length (m)</label><input type="number" step="0.01" value="0.5" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                        <div><label class="block text-xs font-medium text-gray-600">Wingspan (m)</label><input type="number" step="0.01" value="1.2" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                        <div><label class="block text-xs font-medium text-gray-600">Flight Speed (m/s)</label><input type="number" step="0.1" value="8.0" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                    </div>
+                                </div>
+                                 <div>
+                                    <h4 class="font-semibold text-secondary">Turbine Parameters</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+                                        <div><label class="block text-xs font-medium text-gray-600">Rotor Diameter (m)</label><input type="number" value="52" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                        <div><label class="block text-xs font-medium text-gray-600">Max Blade Chord (m)</label><input type="number" step="0.1" value="2.3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                        <div><label class="block text-xs font-medium text-gray-600">Blade Pitch (°)</label><input type="number" value="16" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                         <div><label class="block text-xs font-medium text-gray-600">Rotation (s/rev)</label><input type="number" step="0.01" value="1.91" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-3 rounded-md text-center">
+                                    <p class="text-sm text-gray-500">Calculated Collision Probability per Passage (Average)</p>
+                                    <p id="crm-probability" class="text-2xl font-bold text-secondary">17.9%</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stage 4 & 5 -->
+                        <div>
+                            <h3 class="text-xl font-bold text-secondary">Stage 4 & 5: Adjustments</h3>
+                            <p class="text-sm text-gray-500 mt-1">Accounts for turbine downtime and the bird's natural avoidance behaviour.</p>
+                             <div class="mt-4 p-4 border rounded-md bg-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Turbine Operational Time (%)</label>
+                                    <input type="number" value="85" max="100" oninput="updateImpactCalculation()" id="crm-optime" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Avoidance Rate (%)</label>
+                                    <input type="number" value="98" max="100" oninput="updateImpactCalculation()" id="crm-avoidance" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Output -->
+                        <div class="bg-blue-100 p-6 rounded-lg text-center">
+                            <h3 class="text-xl font-bold text-blue-800">Estimated Annual Collisions</h3>
+                            <p class="text-4xl font-bold text-blue-800 mt-2" id="crm-final-result">0.03</p>
+                            <p class="text-sm text-gray-600 mt-2">This is the predicted mortality assuming no mitigation measures are applied.</p>
+                        </div>
+                    </div>
+
+                </div>
+                 <div id="reporting-view" class="view p-0 md:p-8 h-full bg-surface md:bg-background">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-0 lg:gap-8 h-full">
+                        <!-- Left Panel: Editor -->
+                        <div class="lg:col-span-3 bg-surface rounded-lg lg:shadow-md flex flex-col h-[calc(100vh)] lg:h-[calc(100vh-4rem)]">
+                            <div class="p-4 border-b flex items-center justify-between">
+                                <h3 class="text-xl font-bold text-secondary">Generated Report</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500">Export</button>
+                                </div>
+                            </div>
+                            <div id="ai-report-content" class="p-6 overflow-y-auto flex-1 prose max-w-none">
+                                <p class="text-gray-500">Your AI-generated report will appear here. Use the AI assistant on the right to get started.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: AI Assistant -->
+                        <div class="lg:col-span-2 bg-surface rounded-lg lg:shadow-md flex flex-col h-[calc(100vh)] lg:h-[calc(100vh-4rem)] border-t lg:border-none">
+                             <div class="p-4 border-b">
+                                <h3 class="text-xl font-bold text-secondary">AI Reporting Assistant</h3>
+                             </div>
+                             <div id="ai-chat-history" class="p-6 overflow-y-auto flex-1 space-y-4">
+                                <!-- Chat messages will appear here -->
+                                <div class="p-3 bg-blue-100 rounded-lg text-blue-800 text-sm">
+                                   <p>Welcome to the Intelligent Reporting suite. I have access to all your project data including desk studies, field surveys, and impact calculations. How can I help you today?</p>
+                                </div>
+                             </div>
+                             <div class="p-4 border-t bg-gray-50 rounded-b-lg">
+                                <div class="space-y-4">
+                                    <button onclick="generateAiReport()" class="w-full bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center justify-center space-x-2">
+                                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                        <span>Generate Draft Report</span>
+                                    </button>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                         <div>
+                                            <label for="audience-tone" class="block text-xs font-medium text-gray-600 mb-1">Audience Tone</label>
+                                            <select id="audience-tone" class="w-full text-sm px-3 py-2 border border-gray-300 rounded-md">
+                                                <option>Technical (Internal)</option>
+                                                <option>Public / Funding</option>
+                                                <option>Investor</option>
+                                            </select>
+                                        </div>
+                                        <button onclick="addVisualisation()" class="w-full text-sm bg-white border border-gray-300 py-2 px-3 rounded-md hover:bg-gray-50">Add Visualisation</button>
+                                        <button onclick="enrichData()" class="w-full text-sm bg-white border border-gray-300 py-2 px-3 rounded-md hover:bg-gray-50">Enrich with Data</button>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="text" id="ai-prompt-input" placeholder="Ask for refinements, e.g., 'Summarize the mitigation measures.'" class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md text-sm">
+                                        <button class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-accent">
+                                            <i data-lucide="send" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="visualisation-view" class="view p-4 md:p-8">
+                    <h2 class="text-3xl font-bold text-secondary">Configure Project Visualisation</h2>
+                    <p class="text-gray-500 mt-1">Review your project settings before publishing the public visualisation map.</p>
+                    
+                    <div class="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        <!-- Left Nav -->
+                        <div class="lg:col-span-1">
+                            <nav id="visualisation-nav" class="space-y-1">
+                                <!-- Nav items will be injected by JS -->
+                            </nav>
+                        </div>
+
+                        <!-- Right Content -->
+                        <div class="lg:col-span-3 bg-surface p-6 md:p-8 rounded-lg shadow-md">
+                            <div id="visualisation-content">
+                                <!-- Content for each nav item will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Survey Form View -->
+                <div id="survey-form-view" class="view p-4 bg-gray-50 min-h-screen">
+                    <div class="w-full max-w-2xl mx-auto bg-surface p-6 rounded-lg shadow-md">
+                        <div class="mb-6 text-center">
+                            <h2 id="survey-form-title" class="text-2xl font-bold text-secondary"></h2>
+                            <p id="survey-form-project-name" class="text-gray-600"></p>
+                            <p id="survey-form-site-name" class="text-sm text-gray-500"></p>
+                        </div>
+
+                        <form id="mobile-survey-form" onsubmit="event.preventDefault(); submitSurvey();">
+                            <input type="hidden" id="survey-id-input">
+                            <!-- Habitat Mapping -->
+                            <div class="mb-6">
+                                <label class="block text-lg font-semibold text-gray-700 mb-2">Habitat Mapping</label>
+                                <div class="bg-gray-50 p-4 rounded-md space-y-4">
+                                    <div>
+                                        <label for="habitat-type" class="block text-sm font-medium text-gray-600 mb-1">Habitat Type (Irish Classification)</label>
+                                        <select id="habitat-type" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                                            <option>GS2 - Dry meadows and grassy verges</option>
+                                            <option>WL1 - Hedgerows</option>
+                                            <option>WD1 - Oak-birch-holly woodland</option>
+                                            <option>FW2 - Rivers and streams</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="habitat-notes" class="block text-sm font-medium text-gray-600 mb-1">Notes on Habitat Condition</label>
+                                        <textarea id="habitat-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Species Records -->
+                            <div class="mb-6">
+                                <label class="block text-lg font-semibold text-gray-700 mb-2">Species Records</label>
+                                <div class="bg-gray-50 p-4 rounded-md space-y-4">
+                                    <div>
+                                        <label for="species-observed" class="block text-sm font-medium text-gray-600 mb-1">Species Observed</label>
+                                        <input type="text" id="species-observed" placeholder="e.g., European Robin (Erithacus rubecula)" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    </div>
+                                    <div>
+                                        <label for="species-notes" class="block text-sm font-medium text-gray-600 mb-1">Notes</label>
+                                        <textarea id="species-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Photo Upload -->
+                            <div class="mb-8">
+                                <label class="block text-lg font-semibold text-gray-700 mb-2">GPS-tagged Photos</label>
+                                <div class="bg-gray-50 p-4 rounded-md text-center">
+                                    <input type="file" id="photo-upload" class="hidden" accept="image/*" onchange="displayPhotoPreview(event)">
+                                    <label for="photo-upload" class="cursor-pointer bg-white border border-gray-300 rounded-md p-4 flex flex-col items-center">
+                                        <i data-lucide="camera" class="w-10 h-10 text-gray-400 mb-2"></i>
+                                        <span class="text-sm font-medium text-accent">Add Photo</span>
+                                    </label>
+                                    <div id="photo-preview-container" class="mt-4"></div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-accent text-white py-3 px-4 rounded-md hover:bg-orange-500 font-semibold transition duration-150">Submit Survey Data</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="new-survey-project-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-surface p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 class="text-xl font-bold text-secondary mb-4">Create New Survey Project</h3>
+            <p class="text-sm text-gray-500 mb-6">This will create a new project container for your survey.</p>
+            <form onsubmit="event.preventDefault(); createNewSurveyFromModal();">
+                <input type="hidden" id="new-survey-template-id-input">
+                <div class="mb-4">
+                    <label for="new-project-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+                    <input type="text" id="new-project-name" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label for="new-client-name" class="block text-sm font-medium text-gray-700">Client Name</label>
+                    <input type="text" id="new-client-name" value="Default Client" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="hideNewSurveyProjectModal()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="assign-survey-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-surface p-8 rounded-lg shadow-xl w-full max-w-lg text-center">
+            <h3 class="text-xl font-bold text-secondary mb-2">Survey Ready to Assign</h3>
+            <p class="text-gray-600 mb-4">Share this secure link with the field ecologist.</p>
+            <div class="bg-gray-100 p-3 rounded-md mb-4">
+                <input id="survey-link-input" type="text" readonly class="w-full bg-transparent text-sm text-gray-800 border-none focus:ring-0">
+            </div>
+             <div class="flex justify-center space-x-3">
+                <button onclick="copySurveyLink()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span>Copy Link</span>
+                </button>
+                <button onclick="hideAssignSurveyModal()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+     <div id="assign-third-party-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-surface p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <div id="assign-third-party-form">
+                <h3 class="text-xl font-bold text-secondary mb-4">Assign Task to a Third Party</h3>
+                <form onsubmit="event.preventDefault(); generateThirdPartyLink();">
+                    <div class="mb-4">
+                        <label for="third-party-email" class="block text-sm font-medium text-gray-700">3rd Party Email Address</label>
+                        <input type="email" id="third-party-email" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md" required placeholder="consultant@example.com">
+                    </div>
+                    <div class="mb-4">
+                        <label for="third-party-task" class="block text-sm font-medium text-gray-700">Assign Task</label>
+                        <select id="third-party-task" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="survey">Assign Full Survey</option>
+                            <option value="upload">Request Field Data Upload</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="hideAssignToThirdPartyModal()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                        <button type="submit" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500">Generate Link</button>
+                    </div>
+                </form>
+            </div>
+            <div id="assign-third-party-link" class="hidden text-center">
+                 <h3 class="text-xl font-bold text-secondary mb-2">Secure Link Generated</h3>
+                <p class="text-gray-600 mb-4">Share this link with the third party to grant access.</p>
+                <div class="bg-gray-100 p-3 rounded-md mb-4">
+                    <input id="third-party-link-input" type="text" readonly class="w-full bg-transparent text-sm text-gray-800 border-none focus:ring-0">
+                </div>
+                 <div class="flex justify-center space-x-3">
+                    <button onclick="copyThirdPartyLink()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Copy Link</span>
+                    </button>
+                    <button onclick="hideAssignToThirdPartyModal()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast bg-green-600 text-white">
+        <div class="flex items-center space-x-2">
+            <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="toast-message"></span>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STORE (Mock Database & Local Storage) ---
+        let db;
+        const defaultDb = {
+            projects: [
+                { id: 1, name: "N59 Road Realignment", client: "Galway County Council", code: "GCC-001-25" },
+            ],
+            surveys: [
+                { id: 101, projectId: 1, siteName: "Site A - Woodland", template: "PEA", status: "Completed", data: { habitat: "WD1 - Oak-birch-holly woodland", notes: "Mature oak canopy, limited undergrowth.", species: "Sciurus vulgaris (Red Squirrel)", photo: "https://placehold.co/600x400/a3e635/ffffff?text=Woodland+Canopy" } },
+                { id: 102, projectId: 1, siteName: "Site B - River Crossing", template: "EcIA", status: "In Progress", data: {} },
+            ],
+            team: [
+                { name: "Dr. Aoife Murphy", email: "aoife.murphy@dulra.ie", role: "Principal Ecologist" },
+                { name: "Cian O'Donnell", email: "cian.odonnell@dulra.ie", role: "Field Ecologist" },
+                { name: "Siobhán Kelly", email: "siobhan.kelly@dulra.ie", role: "GIS Specialist" }
+            ]
+        };
+
+        function saveData() {
+            localStorage.setItem('dulraDb', JSON.stringify(db));
+        }
+
+        function loadData() {
+            const storedDb = localStorage.getItem('dulraDb');
+            db = storedDb ? JSON.parse(storedDb) : JSON.parse(JSON.stringify(defaultDb));
+        }
+
+        const surveyTemplates = [
+            { id: "PEA", name: "Preliminary Ecological Appraisal (PEA)", description: "A baseline ecological assessment for planning.", icon: "clipboard-list" },
+            { id: "EcIA", name: "Ecological Impact Assessment (EcIA)", description: "Assesses the potential impacts of a proposed development.", icon: "alert-triangle" },
+            { id: "Planning", name: "Planning", description: "General planning application survey.", icon: "landmark" },
+            { id: "PlanningWind", name: "Planning for Wind Farms", description: "Specialized planning for wind energy projects.", icon: "wind" },
+            { id: "EUHabitats", name: "EU Habitats Directive Assessment", description: "Condition status assessments for protected sites.", icon: "shield-check" },
+            { id: "BNGFeasibility", name: "BNG Feasibility", description: "Initial assessment for Biodiversity Net Gain.", icon: "search" },
+            { id: "BNGDesign", name: "BNG Design", description: "Detailed BNG design and planning.", icon: "drafting-compass" },
+            { id: "BNGAudit", name: "BNG Audit", description: "Auditing and monitoring of BNG projects.", icon: "check-square" }
+        ];
+
+        let currentProjectId = null;
+        let currentProjectTab = 'surveys';
+        let currentVisualisationTab = 'basic';
+        let chartInstances = {}; // To hold chart objects
+
+        // --- VIEW MANAGEMENT ---
+        const views = document.querySelectorAll('.view');
+        function showView(viewId, param = null) {
+            views.forEach(view => view.classList.remove('active-view'));
+            document.getElementById(viewId).classList.add('active-view');
+            
+            document.querySelector('main').scrollTo(0, 0);
+
+            if (viewId === 'dashboard-view') renderDashboard();
+            if (viewId === 'my-surveys-view') renderProjects();
+            if (viewId === 'project-detail-view') {
+                currentProjectId = param;
+                renderProjectDetails(param);
+            }
+            if (viewId === 'survey-form-view') renderSurveyForm(param);
+            if (viewId === 'survey-template-view') renderSurveyTemplates();
+            if (viewId === 'eiar-editor-view') renderEiarEditor(param);
+            if (viewId === 'gis-view') showInitialGisChoice();
+            if (viewId === 'datamine-view') document.getElementById('datamine-results-container').classList.add('hidden');
+            if (viewId === 'team-view') renderTeamView();
+            if (viewId === 'impact-view') updateImpactCalculation();
+            if (viewId === 'visualisation-view') renderVisualisationView();
+        }
+        
+        // --- ROUTING (based on URL) ---
+        function handleRouting() {
+            const params = new URLSearchParams(window.location.search);
+            const surveyId = params.get('survey');
+            
+            if(surveyId) {
+                const survey = db.surveys.find(s => s.id == surveyId);
+                if(survey) {
+                    showView('survey-form-view', survey.id);
+                }
+            } else {
+                showView('dashboard-view'); // Default to dashboard
+            }
+        }
+
+        // --- RENDERING FUNCTIONS ---
+        function renderSurveyTemplates() {
+            const container = document.querySelector('#survey-template-view .grid');
+            container.innerHTML = surveyTemplates.map(template => `
+                <div onclick="startSurveyFromTemplate('${template.id}')" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col">
+                    <div class="flex-1">
+                        <i data-lucide="${template.icon}" class="w-8 h-8 text-accent mb-3"></i>
+                        <h3 class="font-bold text-lg text-secondary">${template.name}</h3>
+                        <p class="text-sm text-gray-500 mt-1">${template.description}</p>
+                    </div>
+                    <button class="mt-4 text-sm font-semibold text-accent text-left">Start Survey &rarr;</button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderProjects() {
+            const list = document.getElementById('project-list');
+            if (db.projects.length === 0) {
+                 list.innerHTML = `<div class="text-center py-12 bg-surface rounded-lg shadow-sm">
+                    <i data-lucide="folder-search" class="w-12 h-12 text-gray-300 mx-auto"></i>
+                    <h3 class="mt-2 text-lg font-medium text-secondary">No surveys yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating your first survey.</p>
+                    <button onclick="showView('survey-template-view')" class="mt-4 bg-primary text-secondary py-2 px-4 rounded-md hover:brightness-95 text-sm">Create Survey</button>
+                 </div>`;
+                 lucide.createIcons();
+                 return;
+            }
+            list.innerHTML = db.projects.map(p => {
+                const projectSurveys = db.surveys.filter(s => s.projectId === p.id);
+                const completed = projectSurveys.filter(s => s.status === 'Completed').length;
+                return `
+                <div class="bg-surface p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer" onclick="showView('project-detail-view', ${p.id})">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg text-secondary">${p.name}</h3>
+                            <p class="text-sm text-gray-500">${p.client}</p>
+                        </div>
+                        <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">${p.code}</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <p class="text-xs text-gray-500">${completed} of ${projectSurveys.length} surveys completed.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div class="bg-accent h-1.5 rounded-full" style="width: ${projectSurveys.length > 0 ? (completed / projectSurveys.length) * 100 : 0}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function renderProjectDetails(projectId) {
+            const project = db.projects.find(p => p.id === projectId);
+            document.getElementById('project-title').textContent = project.name;
+            document.getElementById('project-client').textContent = project.client;
+            document.getElementById('project-code').textContent = project.code;
+            
+            renderProjectTabs(projectId);
+            renderProjectTabContent(projectId);
+        }
+        
+        function renderEiarEditor(params) {
+            const { projectId } = params;
+            const project = db.projects.find(p => p.id === projectId);
+            currentProjectId = projectId; // Set current project context
+            document.getElementById('eiar-editor-project-name').textContent = `Project: ${project.name}`;
+        }
+
+        function renderTeamView() {
+            const list = document.getElementById('team-list');
+            list.innerHTML = db.team.map(member => `
+                 <tr>
+                    <td class="p-4 font-medium text-secondary">${member.name}</td>
+                    <td class="p-4 text-gray-600">${member.email}</td>
+                    <td class="p-4"><span class="text-xs font-medium px-2.5 py-0.5 rounded ${member.role === 'Principal Ecologist' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">${member.role}</span></td>
+                    <td class="p-4"><button class="text-gray-400 hover:text-accent"><i data-lucide="more-horizontal"></i></button></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderProjectTabs(projectId) {
+             const tabs = [ { id: 'surveys', name: 'Surveys' } ];
+            const tabsContainer = document.getElementById('project-tabs');
+            tabsContainer.innerHTML = tabs.map(tab => `
+                <button onclick="setProjectTab('${tab.id}')" class="${currentProjectTab === tab.id ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    ${tab.name}
+                </button>
+            `).join('');
+        }
+
+        function setProjectTab(tabId) {
+            currentProjectTab = tabId;
+            renderProjectTabs(currentProjectId);
+            renderProjectTabContent(currentProjectId);
+        }
+
+        function renderProjectTabContent(projectId) {
+            const contentContainer = document.getElementById('project-tab-content');
+            if (currentProjectTab === 'surveys') {
+                const projectSurveys = db.surveys.filter(s => s.projectId === projectId);
+                contentContainer.innerHTML = `
+                    <div id="survey-list" class="space-y-4">
+                    ${projectSurveys.length > 0 ? projectSurveys.map(s => {
+                        const statusColors = { 'Ready': 'bg-blue-100 text-blue-800', 'In Progress': 'bg-yellow-100 text-yellow-800', 'Completed': 'bg-green-100 text-green-800' };
+                        const statusColor = statusColors[s.status] || 'bg-gray-100 text-gray-800';
+                        return `
+                        <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-secondary">${s.siteName} <span class="text-xs font-normal text-gray-500 ml-2">(${s.template})</span></p>
+                                <span class="text-xs font-medium px-2.5 py-0.5 rounded ${statusColor}">${s.status}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                ${s.status === 'Ready' ? `<button onclick="assignSurvey(${s.id})" class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500">Assign</button>` : ''}
+                                ${s.status === 'Completed' ? `<button onclick="generateReport(${s.id})" class="text-sm bg-secondary text-white py-1 px-3 rounded-md hover:bg-slate-600">Generate Report</button>` : ''}
+                            </div>
+                        </div>`;
+                    }).join('') : '<p class="text-gray-500">No surveys created for this project yet.</p>'}
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function renderSurveyForm(surveyId) {
+            const survey = db.surveys.find(s => s.id === surveyId);
+            const project = db.projects.find(p => p.id === survey.projectId);
+            const template = surveyTemplates.find(t => t.id === survey.template);
+
+            document.getElementById('survey-id-input').value = survey.id;
+            document.getElementById('survey-form-title').textContent = template.name;
+            document.getElementById('survey-form-project-name').textContent = project.name;
+            document.getElementById('survey-form-site-name').textContent = survey.siteName;
+        }
+
+        // --- MODAL CONTROLS ---
+        const newSurveyProjectModal = document.getElementById('new-survey-project-modal');
+        const assignSurveyModal = document.getElementById('assign-survey-modal');
+        const assignThirdPartyModal = document.getElementById('assign-third-party-modal');
+        function showNewSurveyProjectModal() { newSurveyProjectModal.classList.remove('hidden'); }
+        function hideNewSurveyProjectModal() { newSurveyProjectModal.classList.add('hidden'); }
+        function showAssignSurveyModal() { assignSurveyModal.classList.remove('hidden'); }
+        function hideAssignSurveyModal() { assignSurveyModal.classList.add('hidden'); }
+        function showAssignToThirdPartyModal() { 
+            document.getElementById('assign-third-party-form').style.display = 'block';
+            document.getElementById('assign-third-party-link').style.display = 'none';
+            assignThirdPartyModal.classList.remove('hidden'); 
+        }
+        function hideAssignToThirdPartyModal() { assignThirdPartyModal.classList.add('hidden'); }
+        
+        // --- TOAST NOTIFICATION ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMessage.textContent = message;
+            toast.className = 'toast show'; // Reset and show
+            if (type === 'success') {
+                toast.classList.add('bg-green-600', 'text-white');
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+            } else { // error
+                toast.classList.add('bg-red-600', 'text-white');
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+            }
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+
+        // --- GIS VIEW CONTROLS ---
+        function showArcGisOptions() {
+            document.getElementById('gis-initial-choice').classList.add('hidden');
+            document.getElementById('gis-arcgis-options').classList.remove('hidden');
+        }
+
+        function showInitialGisChoice() {
+            document.getElementById('gis-arcgis-options').classList.add('hidden');
+            document.getElementById('gis-initial-choice').classList.remove('hidden');
+        }
+
+        // --- DATA MINE CONTROLS ---
+        function performDataMineSearch() {
+            const resultsContainer = document.getElementById('datamine-results-container');
+            const loading = document.getElementById('datamine-loading');
+            const content = document.getElementById('datamine-results-content');
+            
+            resultsContainer.classList.remove('hidden');
+            content.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            // Simulate a network request
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            }, 1500);
+        }
+
+        // --- DYNAMIC FIELD SURVEY ENTRY ---
+        function addHabitatEntry() {
+            const container = document.getElementById('habitat-entries');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'p-4 border rounded-md bg-gray-50';
+            newEntry.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Habitat Code</label>
+                        <input type="text" placeholder="e.g., GS2" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Habitat Name</label>
+                        <input type="text" placeholder="e.g., Dry meadows" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                    <textarea rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+            `;
+            container.appendChild(newEntry);
+        }
+
+        function addFaunaSighting() {
+             const container = document.getElementById('fauna-entries');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'p-4 border rounded-md bg-gray-50';
+            newEntry.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Species</label>
+                        <input type="text" placeholder="e.g., Otter" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Number</label>
+                        <input type="number" value="1" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Evidence</label>
+                        <input type="text" placeholder="e.g., Spraint" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                    <textarea rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+            `;
+            container.appendChild(newEntry);
+        }
+
+        function addFloraRecord() {
+            const container = document.getElementById('flora-entries');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'p-4 border rounded-md bg-gray-50';
+            newEntry.innerHTML = `
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Species Name</label>
+                        <input type="text" placeholder="e.g., Bluebell" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">DAFOR Scale</label>
+                         <select class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option>Dominant</option>
+                            <option>Abundant</option>
+                            <option>Frequent</option>
+                            <option>Occasional</option>
+                            <option>Rare</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                    <textarea rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+            `;
+            container.appendChild(newEntry);
+        }
+
+        // --- IMPACT CALCULATION ---
+        function updateImpactCalculation() {
+            const passages = 11.19; // Static based on example for UI simplicity
+            const probability = 0.179; // Static based on example
+            
+            const opTime = parseFloat(document.getElementById('crm-optime').value) / 100 || 0.85;
+            const avoidance = parseFloat(document.getElementById('crm-avoidance').value) / 100 || 0.98;
+
+            const adjustedProbability = probability * opTime;
+            const finalCollisions = passages * adjustedProbability * (1 - avoidance);
+
+            document.getElementById('crm-final-result').textContent = finalCollisions.toFixed(2);
+        }
+        
+        // --- DASHBOARD ---
+        function renderDashboard() {
+            destroyCharts(); // Clear old charts before rendering new ones
+            renderRestorationChart();
+            renderStatusChart('actions-chart', 'Action Status', [5, 3, 8, 12]); // Example data
+            renderStatusChart('surveys-chart', 'Assessment Status', [2, 1, 4, 7]); // Example data
+            renderCsvData();
+        }
+
+        function destroyCharts() {
+            Object.values(chartInstances).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            chartInstances = {};
+        }
+
+        function renderRestorationChart() {
+            const ctx = document.getElementById('restoration-chart').getContext('2d');
+            chartInstances.restoration = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['2025', '2030', '2050'],
+                    datasets: [{
+                        label: '% of Target Achieved',
+                        data: [14.4, 30, 100],
+                        backgroundColor: ['#A4C8FD', '#A4C8FD', '#A4C8FD'],
+                        borderColor: '#122529',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                             ticks: { callback: value => `${value}%` }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStatusChart(canvasId, label, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const total = data.reduce((a, b) => a + b, 0);
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Not Assigned', 'Pending', 'In Progress', 'Completed'],
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: ['#E5E7EB', '#FBBF24', '#3B82F6', '#10B981'],
+                    }]
+                },
+                 options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const value = context.raw;
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    label += `${value} (${percentage})`;
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        const assessmentsCsvData = `SITECODE,SITE_NAME,Status ,COUNTY,HA,Link to Survey 
+9,Slieve Rushen Bog NHA,Not Assigned ,Cavan ,674.7,https://www.npws.ie/protected-sites/nha/000009
+151,Inishduff NHA,Pending ,Donegal,46.5,https://www.npws.ie/protected-sites/nha/000151
+184,Roaninish NHA,In Progress,Donegal,145.8,https://www.npws.ie/protected-sites/nha/000184
+220,Lough Namucka Bog NHA,Completed,Galway,221.0,https://www.npws.ie/protected-sites/nha/000220`;
+        
+       const actionsCsvData = `SITECODE,SITE_NAME,Status,COUNTY,Action Type,Link to Survey
+245,Clooncullaun Bog NHA,In Progress,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000245
+247,Slieve Bog NHA,Completed,Galway,Species protection,https://www.npws.ie/protected-sites/nha/000247
+249,Cloonoolish Bog NHA,Completed,Galway,Species protection,https://www.npws.ie/protected-sites/nha/000249
+253,Cregganna Marsh NHA,Completed,Galway,Species protection,https://www.npws.ie/protected-sites/nha/000253
+254,Crit Island West NHA,Not Assigned,Galway,Public engagement and education,https://www.npws.ie/protected-sites/nha/000254
+267,Funshin Bog NHA,Not Assigned,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000267
+280,Castle Ffrench West Bog NHA,Not Assigned,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000280
+281,Keeloges Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000281
+283,Kilmore Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000283
+284,Kilnaborris Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000284`;
+        
+        function parseCsv(csvString) {
+            const rows = csvString.trim().split('\n');
+            const headers = rows.shift().split(',').map(h => h.trim());
+            return rows.map(row => {
+                const values = row.split(',');
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index] ? values[index].trim() : '';
+                    return obj;
+                }, {});
+            });
+        }
+
+        function renderCsvData() {
+            const assessmentsData = parseCsv(assessmentsCsvData);
+            const actionsData = parseCsv(actionsCsvData);
+            
+            const assessmentsTable = document.getElementById('assessments-table');
+            assessmentsTable.innerHTML = assessmentsData.map(row => `
+                <tr>
+                    <td class="p-2">${row.SITE_NAME}</td>
+                    <td class="p-2">${row['Status ']}</td>
+                    <td class="p-2">${row.COUNTY}</td>
+                    <td class="p-2 text-right">${row.HA}</td>
+                </tr>`).join('');
+            
+            const actionsTable = document.getElementById('actions-table');
+            actionsTable.innerHTML = actionsData.map(row => `
+                <tr>
+                    <td class="p-2">${row.SITE_NAME}</td>
+                    <td class="p-2">${row.Status}</td>
+                    <td class="p-2">${row['Action Type']}</td>
+                    <td class="p-2">${row.COUNTY}</td>
+                </tr>`).join('');
+        }
+
+
+        // --- VISUALISATION VIEW ---
+        const visTabs = [
+            { id: 'basic', name: 'Basic Information', icon: 'file-text' },
+            { id: 'impacts', name: 'Impacts', icon: 'alert-triangle' },
+            { id: 'metrics', name: 'Metrics', icon: 'bar-chart-3' },
+            { id: 'habitats', name: 'Habitats', icon: 'leaf' },
+            { id: 'sites', name: 'Sites', icon: 'map-pin' },
+            { id: 'funding', name: 'Funding', icon: 'landmark' },
+            { id: 'badges', name: 'Badges', icon: 'award' },
+            { id: 'finish', name: 'Finish', icon: 'check-circle' }
+        ];
+
+        function renderVisualisationView() {
+            currentVisualisationTab = 'basic';
+            renderVisualisationNav();
+            renderVisualisationContent();
+        }
+
+        function renderVisualisationNav() {
+            const nav = document.getElementById('visualisation-nav');
+            nav.innerHTML = visTabs.map(tab => `
+                <button onclick="setVisualisationTab('${tab.id}')" class="${currentVisualisationTab === tab.id ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'} w-full flex items-center space-x-3 py-2 px-3 rounded-md text-sm font-medium">
+                    <i data-lucide="${tab.icon}" class="w-5 h-5"></i>
+                    <span>${tab.name}</span>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function setVisualisationTab(tabId) {
+            currentVisualisationTab = tabId;
+            renderVisualisationNav();
+            renderVisualisationContent();
+        }
+
+        function renderVisualisationContent() {
+            const content = document.getElementById('visualisation-content');
+            let html = '';
+            switch(currentVisualisationTab) {
+                case 'basic':
+                    html = `
+                        <h3 class="text-2xl font-bold text-secondary mb-4">Basic Information</h3>
+                        <div class="space-y-4">
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Project Name</label>
+                                <input type="text" value="Ballycroy Wind Farm EIA" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Project Description</label>
+                                <textarea rows="4" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">Ecological Impact Assessment for a proposed wind farm development in County Mayo.</textarea>
+                            </div>
+                        </div>`;
+                    break;
+                case 'impacts':
+                     html = `
+                        <h3 class="text-2xl font-bold text-secondary mb-4">Impacts</h3>
+                        <p class="text-gray-600 mb-4">Data automatically populated from the Impact Calculation module.</p>
+                         <div class="p-4 border rounded-md bg-gray-50">
+                            <label class="block text-sm font-medium text-gray-700">Ornithological Collision Risk (Hen Harrier)</label>
+                            <input type="text" value="0.03 collisions / year" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200" readonly>
+                        </div>`;
+                    break;
+                 case 'habitats':
+                    html = `
+                        <h3 class="text-2xl font-bold text-secondary mb-4">Habitats</h3>
+                        <p class="text-gray-600 mb-4">Data populated from Data Mine and Field Survey modules.</p>
+                         <div class="space-y-2">
+                             <div class="p-3 bg-gray-50 rounded-md">Blanket Bog (PB2)</div>
+                             <div class="p-3 bg-gray-50 rounded-md">Wet Heath (HH3)</div>
+                         </div>
+                    `;
+                    break;
+                case 'sites':
+                     html = `
+                        <h3 class="text-2xl font-bold text-secondary mb-4">Site Location</h3>
+                        <p class="text-gray-600 mb-4">Configure the project site on the map.</p>
+                        <div class="mt-2 text-center border rounded-md">
+                            <img src="https://placehold.co/800x400/e2e8f0/475569?text=Interactive+Map+Interface" alt="Map Placeholder" class="w-full rounded-md">
+                        </div>
+                    `;
+                    break;
+                case 'finish':
+                    html = `
+                        <h3 class="text-2xl font-bold text-secondary mb-4">Finish Project Setup</h3>
+                        <p class="text-gray-600 mb-6">Your project is almost ready. Review your settings and decide if you want to publish it.</p>
+                        <div class="p-4 border rounded-lg flex items-center justify-between">
+                            <div>
+                                <h4 class="font-semibold">Project Visibility</h4>
+                                <p class="text-sm text-gray-500">Publishing your project will make it visible on the public map. Users will be able to see your project details, funding information, and impact metrics.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" value="" class="sr-only peer">
+                              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                            </label>
+                        </div>
+                        <div class="mt-8 flex justify-end">
+                            <button class="bg-accent text-white py-2 px-6 rounded-md hover:bg-orange-500">Finish</button>
+                        </div>`;
+                    break;
+                default:
+                    html = `<h3 class="text-2xl font-bold text-secondary">${visTabs.find(t=>t.id===currentVisualisationTab).name}</h3><p>Configuration options for this section will appear here.</p>`;
+            }
+            content.innerHTML = html;
+        }
+
+        // --- AI REPORTING ---
+        function addAiChatMessage(content, isUser = false) {
+            const history = document.getElementById('ai-chat-history');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser 
+                ? 'p-3 bg-gray-200 rounded-lg text-secondary text-sm'
+                : 'p-3 bg-blue-100 rounded-lg text-blue-800 text-sm';
+            messageDiv.innerHTML = `<p>${content}</p>`;
+            history.appendChild(messageDiv);
+            history.scrollTop = history.scrollHeight;
+        }
+
+        function generateAiReport() {
+            const reportContent = document.getElementById('ai-report-content');
+            const audience = document.getElementById('audience-tone').value;
+            reportContent.innerHTML = `<div class="flex items-center justify-center h-full"><div class="text-center"><div class="loading-spinner mx-auto"></div><p class="mt-4 text-gray-500">Generating report for: <b>${audience}</b>...</p></div></div>`;
+            addAiChatMessage(`Okay, I'm generating a draft report with a tone suitable for a <b>${audience}</b> audience. I'll pull in the desk study, field survey data, and the latest impact calculation results.`);
+            
+            setTimeout(() => {
+                reportContent.innerHTML = `
+                    <h2>1.0 Introduction</h2>
+                    <p>This report presents the findings of an Ecological Impact Assessment for the proposed N59 Road Realignment. The assessment identifies key ecological receptors and evaluates the potential effects of the project.</p>
+                    <h2>2.0 Field Survey Summary</h2>
+                    <p>Field surveys were conducted on 23/09/2025. The dominant habitat recorded was <b>WD1 - Oak-birch-holly woodland</b>. Key species identified included Sciurus vulgaris (Red Squirrel).</p>
+                    <h2>3.0 Impact Assessment (Ornithology)</h2>
+                    <p>Based on the Nature Scot Collision Risk Model, the predicted mortality for Hen Harrier is <b>0.03 collisions per year</b>, assuming a 98% avoidance rate. This is considered a low-significance impact.</p>
+                    <h2>4.0 Proposed Mitigation</h2>
+                    <p>Mitigation measures will include...</p>
+                `;
+                addAiChatMessage('The draft report is ready for your review. You can edit the text directly or ask me for refinements.');
+            }, 2500);
+        }
+
+        function addVisualisation() {
+             addAiChatMessage("Sure. What kind of visualisation would you like to add? For example, 'a map of the survey area' or 'a bar chart of habitat types'.");
+        }
+        
+        function enrichData() {
+             addAiChatMessage("Okay. I can enrich this report with third-party datasets. I have access to regional climate models and habitat layers. This will add deeper context for evaluation. Processing...");
+        }
+
+        // --- CORE ACTIONS ---
+        function startSurveyFromTemplate(templateId) {
+            const template = surveyTemplates.find(t => t.id === templateId);
+            document.getElementById('new-survey-template-id-input').value = templateId;
+            document.getElementById('new-project-name').value = `${template.name} - ${new Date().toLocaleDateString('en-IE')}`;
+            document.getElementById('new-client-name').value = "Default Client";
+            showNewSurveyProjectModal();
+        }
+
+        function createNewSurveyFromModal() {
+            const templateId = document.getElementById('new-survey-template-id-input').value;
+            const projectName = document.getElementById('new-project-name').value;
+            const clientName = document.getElementById('new-client-name').value;
+            
+            if (!projectName || !clientName) {
+                showToast("Please fill out all fields.", "error");
+                return;
+            }
+
+            const newProjectId = (db.projects[db.projects.length - 1]?.id || 0) + 1;
+            const newProject = {
+                id: newProjectId,
+                name: projectName,
+                client: clientName,
+                code: `${clientName.substring(0,3).toUpperCase()}-${String(Math.floor(100 + Math.random() * 900))}-25`
+            };
+            db.projects.push(newProject);
+
+            const newSurveyId = (db.surveys[db.surveys.length - 1]?.id || 0) + 1;
+            db.surveys.push({ id: newSurveyId, projectId: newProjectId, siteName: "Default Site", template: templateId, status: "Ready", data: {} });
+            
+            saveData();
+            hideNewSurveyProjectModal();
+
+            if (templateId === 'EcIA') {
+                showView('eiar-editor-view', { projectId: newProjectId });
+            } else {
+                showView('project-detail-view', newProjectId);
+            }
+        }
+        
+        function saveEiarSurvey() {
+            // In a real app, this would save the content of the textareas.
+            showToast("Survey content saved!");
+            showView('project-detail-view', currentProjectId);
+        }
+        
+        function assignSurvey(surveyId) {
+            const surveyLink = `${window.location.origin}${window.location.pathname}?survey=${surveyId}`;
+            document.getElementById('survey-link-input').value = surveyLink;
+            showAssignSurveyModal();
+        }
+
+        function copySurveyLink() {
+            const input = document.getElementById('survey-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!');
+        }
+        
+        function generateThirdPartyLink() {
+            const email = document.getElementById('third-party-email').value;
+            const task = document.getElementById('third-party-task').value;
+            const randomToken = Math.random().toString(36).substring(2, 12);
+            const link = `${window.location.origin}${window.location.pathname}?task=${task}&token=${randomToken}`;
+            
+            document.getElementById('third-party-link-input').value = link;
+            document.getElementById('assign-third-party-form').style.display = 'none';
+            document.getElementById('assign-third-party-link').style.display = 'block';
+        }
+
+        function copyThirdPartyLink() {
+             const input = document.getElementById('third-party-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!');
+        }
+
+        function displayPhotoPreview(event) {
+            const container = document.getElementById('photo-preview-container');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    container.innerHTML = `<img src="${e.target.result}" class="max-h-40 rounded-md mx-auto">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function submitSurvey() {
+            const surveyId = document.getElementById('survey-id-input').value;
+            const survey = db.surveys.find(s => s.id == surveyId);
+
+            if (survey) {
+                survey.status = "Completed";
+                survey.data = {
+                    habitat: document.getElementById('habitat-type').value,
+                    notes: document.getElementById('habitat-notes').value,
+                    species: document.getElementById('species-observed').value,
+                    speciesNotes: document.getElementById('species-notes').value,
+                    photo: document.querySelector('#photo-preview-container img')?.src || 'https://placehold.co/600x400/e2e8f0/475569?text=No+Photo'
+                };
+                
+                saveData();
+                document.getElementById('mobile-survey-form').innerHTML = `
+                    <div class="text-center py-10">
+                         <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                        <h2 class="text-2xl font-bold text-secondary">Survey Submitted</h2>
+                        <p class="text-gray-600 mt-2">Thank you. Your data has been successfully recorded.</p>
+                         <button onclick="closeSurveyWindow()" class="mt-6 text-sm bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Close Window</button>
+                    </div>
+                `;
+                lucide.createIcons();
+
+            } else {
+                showToast('Error: Could not find survey to submit.', 'error');
+            }
+        }
+        
+        function closeSurveyWindow(){
+            window.location.href = window.location.pathname;
+        }
+
+        // --- REPORT GENERATION (MVP Magic) ---
+        function generateReport(surveyId) {
+            const survey = db.surveys.find(s => s.id === surveyId);
+            const project = db.projects.find(p => p.id === survey.projectId);
+            const template = surveyTemplates.find(t => t.id === survey.template);
+
+            const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({ text: template.name, heading: HeadingLevel.TITLE }),
+                        new Paragraph({ text: `Project: ${project.name}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Client: ${project.client}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Survey Site: ${survey.siteName}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Date: ${new Date().toLocaleDateString('en-IE')}`, style: "IntenteQuote" }),
+                        
+                        new Paragraph({ text: "1.0 Desk Study", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph("A desk-based study was undertaken to identify ecological features within the study area. (Note: Prototype uses placeholder text)."),
+
+                        new Paragraph({ text: "2.0 Field Survey Results", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph({ text: "2.1 Habitats", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
+                        new Paragraph(new TextRun({ text: "Habitat Type:", bold: true }).addChild(new TextRun(` ${survey.data.habitat}`))),
+                        new Paragraph(new TextRun({ text: "Condition Notes:", bold: true }).addChild(new TextRun(` ${survey.data.notes}`))),
+
+                        new Paragraph({ text: "2.2 Species", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
+                         new Paragraph(new TextRun({ text: "Species Observed:", bold: true }).addChild(new TextRun(` ${survey.data.species || 'None recorded.'}`))),
+                         new Paragraph(new TextRun({ text: "Notes:", bold: true }).addChild(new TextRun(` ${survey.data.speciesNotes || 'N/A'}`))),
+                        
+                        new Paragraph({ text: "3.0 Photographic Record", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph("The following photograph was taken on-site:"),
+                         new Paragraph({
+                           children: [ new TextRun(`[Image placeholder: A photo was captured for ${survey.siteName}]`)]
+                         }),
+                    ],
+                }],
+            });
+
+            Packer.toBlob(doc).then(blob => {
+                saveAs(blob, `${project.code}_${template.id}_Report.docx`);
+                showToast("Report downloaded successfully!");
+            });
+        }
+
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            lucide.createIcons();
+            handleRouting();
+            // Add a default entry to each dynamic section on load for demo purposes
+            addHabitatEntry();
+            addFaunaSighting();
+            addFloraRecord();
+        });
+    </script>
+</body>
+</html>
+
