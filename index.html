@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Added Chart.js Datalabels plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
       tailwind.config = {
@@ -101,6 +102,10 @@
         }
         #assessment-detail-view tbody tr:nth-child(even) {
             background-color: #f9fafb;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #FB923C;
+            box-shadow: 0 0 0 2px #FB923C30;
         }
     </style>
 </head>
@@ -298,14 +303,55 @@
 
                 <!-- Survey Template Selection View -->
                 <div id="survey-template-view" class="view p-4 md:p-8">
-                    <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-secondary">Start a New Survey</h2>
-                        <p class="text-gray-500 mt-1">Select a compliant template to begin your report.</p>
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-secondary">Start a New Survey</h2>
+                            <p class="text-gray-500 mt-1">Select a compliant template to begin your report.</p>
+                        </div>
+                        <button onclick="showView('template-editor-view')" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                            <i data-lucide="edit" class="w-5 h-5"></i>
+                            <span>Edit Custom Template</span>
+                        </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Survey templates will be injected here -->
                     </div>
                 </div>
+                
+                <!-- NEW Template Editor View -->
+                <div id="template-editor-view" class="view p-4 md:p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <button onclick="showView('survey-template-view')" class="text-sm text-accent mb-2 flex items-center space-x-1">
+                                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                                <span>Back to Templates</span>
+                            </button>
+                            <h2 class="text-3xl font-bold text-secondary">Custom Template Editor</h2>
+                            <p class="text-gray-500 mt-1">Add your own headings and paragraphs to build a custom survey.</p>
+                        </div>
+                        <button onclick="saveCustomTemplate()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Save Template</span>
+                        </button>
+                    </div>
+                    <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md">
+                        <div class="border-b pb-4 mb-4 flex items-center space-x-2">
+                            <button onclick="addTemplateElement('heading')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
+                                <i data-lucide="heading-1" class="w-4 h-4"></i>
+                                <span>Add Heading</span>
+                            </button>
+                            <button onclick="addTemplateElement('paragraph')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
+                                <i data-lucide="pilcrow" class="w-4 h-4"></i>
+                                <span>Add Paragraph</span>
+                            </button>
+                        </div>
+                        <div id="custom-template-editor" class="space-y-4">
+                            <h3 contenteditable="true" class="text-xl font-bold text-secondary focus:outline-none p-2 rounded-md">Custom Heading 1</h3>
+                            <p contenteditable="true" class="text-gray-700 focus:outline-none p-2 rounded-md">This is an editable paragraph. You can add your own content here.</p>
+                        </div>
+                    </div>
+                </div>
+
 
                 <!-- My Surveys View -->
                 <div id="my-surveys-view" class="view p-4 md:p-8">
@@ -558,44 +604,60 @@
                     <!-- Initial GIS Choices -->
                     <div id="gis-initial-choice" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- ArcGIS Card -->
-                        <div onclick="showArcGisOptions()" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                        <div onclick="showGisConnection('ArcGIS')" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/ArcGIS_logo.png/220px-ArcGIS_logo.png" alt="ArcGIS Logo" class="h-16 mb-4">
                             <h3 class="font-bold text-lg text-secondary">ArcGIS</h3>
                             <p class="text-sm text-gray-500 mt-1">Connect to the Esri Geospatial Cloud.</p>
                         </div>
                         <!-- QGIS Card -->
-                        <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                        <div onclick="showGisConnection('QGIS')" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
                              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/QGIS_Logo_new.svg/200px-QGIS_Logo_new.svg.png" alt="QGIS Logo" class="h-16 mb-4">
                             <h3 class="font-bold text-lg text-secondary">QGIS</h3>
                             <p class="text-sm text-gray-500 mt-1">Connect using the open-source GIS leader.</p>
                         </div>
                         <!-- Another GIS Card -->
-                        <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
+                        <div onclick="showGisConnection('Other GIS')" class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center text-center">
                              <i data-lucide="upload-cloud" class="w-16 h-16 text-accent mb-4"></i>
                             <h3 class="font-bold text-lg text-secondary">Another GIS</h3>
                             <p class="text-sm text-gray-500 mt-1">Import from a shapefile or other common formats.</p>
                         </div>
                     </div>
 
-                    <!-- ArcGIS Specific Options (Initially Hidden) -->
-                    <div id="gis-arcgis-options" class="hidden mt-6">
+                    <!-- GIS Connection & Field Selection (Initially Hidden) -->
+                    <div id="gis-connection-view" class="hidden mt-6">
                         <button onclick="showInitialGisChoice()" class="text-sm text-accent mb-4 flex items-center space-x-1">
                             <i data-lucide="arrow-left" class="w-4 h-4"></i>
                             <span>Back to GIS Options</span>
                         </button>
-                        <h3 class="text-2xl font-bold text-gray-700 mb-4">Select ArcGIS Product</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                             <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
-                                <h3 class="font-bold text-lg text-secondary">ArcGIS Location Platform</h3>
-                                <p class="text-sm text-gray-500 mt-1">For developers using APIs and location services.</p>
+                        <h3 id="gis-connection-title" class="text-2xl font-bold text-secondary mb-4"></h3>
+                        
+                        <div class="bg-surface p-6 rounded-lg shadow-md space-y-6">
+                            <div>
+                                <h4 class="text-lg font-semibold text-secondary">Connection Details</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <label for="gis-api-key" class="block text-sm font-medium text-gray-700">API Key</label>
+                                        <input type="password" id="gis-api-key" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md" value="************">
+                                    </div>
+                                    <div>
+                                        <label for="gis-user-key" class="block text-sm font-medium text-gray-700">User / Client Key</label>
+                                        <input type="password" id="gis-user-key" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md" value="************">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
-                                <h3 class="font-bold text-lg text-secondary">ArcGIS Online</h3>
-                                <p class="text-sm text-gray-500 mt-1">Connect to your cloud-based mapping and analysis solution.</p>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold text-secondary">Select Fields to Extract</h4>
+                                <div id="gis-field-list" class="mt-2 space-y-3 max-h-64 overflow-y-auto p-4 border rounded-md bg-gray-50">
+                                    <!-- GIS fields will be injected here by JS -->
+                                </div>
                             </div>
-                            <div class="bg-surface p-6 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
-                                <h3 class="font-bold text-lg text-secondary">ArcGIS Enterprise</h3>
-                                <p class="text-sm text-gray-500 mt-1">Connect to your organization's self-hosted portal.</p>
+                            
+                            <div class="flex justify-end">
+                                <button class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                                    <i data-lucide="link" class="w-5 h-5"></i>
+                                    <span>Connect & Extract Data</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1004,7 +1066,7 @@
                         <!-- Map and Details -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                              <div>
-                                <h3 class="text-xl font-bold text-secondary mb-3">Site Map</h3>
+                                <h3 class="text-xl font-bold text-secondary mb-3">Site Map (Figure 1)</h3>
                                  <div id="assessment-map" class="mt-2 text-center border rounded-md relative aspect-video bg-gray-200 flex items-center justify-center cursor-pointer" onclick="showMapDetail(event)">
                                     <img src="https://placehold.co/600x400/e2e8f0/475569?text=Rossbehy+Overview+Map+(Fig+1)" alt="Site Map Placeholder" class="w-full h-full object-cover rounded-md">
                                     <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/30">
@@ -1245,7 +1307,6 @@
             db = storedDb ? JSON.parse(storedDb) : JSON.parse(JSON.stringify(defaultDb));
         }
 
-        // Updated Survey Templates based on PRD
         const surveyTemplates = [
             { id: "PEA", name: "Preliminary Ecological Appraisal", description: "A baseline ecological assessment.", icon: "clipboard-list" },
             { id: "EcIA", name: "Ecological Impact Assessment", description: "Assess potential project impacts.", icon: "alert-triangle" },
@@ -1417,7 +1478,6 @@
                 contentContainer.innerHTML = `
                     <div id="survey-list" class="space-y-4">
                     ${projectSurveys.length > 0 ? projectSurveys.map(s => {
-                        const statusColors = { 'Ready': 'bg-blue-100 text-blue-800', 'In Progress': 'bg-yellow-100 text-yellow-800', 'Completed': 'bg-green-100 text-green-800' };
                         const statusColor = getStatusColorClass(s.status); // Use helper
                         return `
                         <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center">
@@ -1601,13 +1661,41 @@
 
 
         // --- GIS VIEW CONTROLS ---
-        function showArcGisOptions() {
+        const gisFields = [
+            { id: 'foss_qualifi', name: 'FOSS_QUALIFI', description: 'Qualifier code for Guide to Habitats classification subtypes.' },
+            { id: 'add_hab', name: 'ADD_HAB', description: 'Field for secondary habitat classification schemes.' },
+            { id: 'foss_name', name: 'FOSS_NAME', description: 'Habitat name corresponding to the Guide to Habitats code.' },
+            { id: 'area_length', name: 'AREA / LENGTH', description: 'Total area (m²) for polygons or length (m) for polylines.' },
+            { id: 'easting_northing', name: 'EASTING / NORTHING', description: 'Coordinates of a point feature or centroid.' },
+            { id: 'photo_id', name: 'PHOTO_ID', description: 'Photo identification numbers related to the habitat feature.' },
+            { id: 'annex_spp', name: 'ANNEX_SPP / RDB_SPP', description: 'Binary (0/1) for presence of Annex II/I or Red Data book species.' },
+            { id: 'evaluation', name: 'EVALUATION', description: 'Conservation evaluation (e.g., International, National).' },
+            { id: 'condition', name: 'CONDITION', description: 'Ecological condition of habitats (e.g., scale 1-5).' },
+            { id: 'threats', name: 'THREATS', description: 'Specific codes identifying threats to habitats.' },
+            { id: 'notes_species', name: 'NOTES / SPECIES', description: 'General comments, characteristic, or notable species.' }
+        ];
+
+        function showGisConnection(toolName) {
             document.getElementById('gis-initial-choice').classList.add('hidden');
-            document.getElementById('gis-arcgis-options').classList.remove('hidden');
+            document.getElementById('gis-connection-view').classList.remove('hidden');
+            document.getElementById('gis-connection-title').textContent = `Connect to ${toolName}`;
+
+            const fieldList = document.getElementById('gis-field-list');
+            fieldList.innerHTML = gisFields.map(field => `
+                <div class="relative flex items-start">
+                    <div class="flex h-5 items-center">
+                        <input id="${field.id}" name="${field.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent" checked>
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="${field.id}" class="font-medium text-secondary">${field.name}</label>
+                        <p class="text-gray-500">${field.description}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function showInitialGisChoice() {
-            document.getElementById('gis-arcgis-options').classList.add('hidden');
+            document.getElementById('gis-connection-view').classList.add('hidden');
             document.getElementById('gis-initial-choice').classList.remove('hidden');
         }
 
@@ -1728,6 +1816,28 @@
              lucide.createIcons();
         }
 
+        // --- TEMPLATE EDITOR ---
+        function addTemplateElement(type) {
+            const editor = document.getElementById('custom-template-editor');
+            const newElement = document.createElement(type === 'heading' ? 'h4' : 'p');
+            newElement.setAttribute('contenteditable', 'true');
+            if (type === 'heading') {
+                newElement.className = 'text-lg font-semibold text-secondary focus:outline-none p-2 rounded-md';
+                newElement.textContent = 'New Editable Heading';
+            } else {
+                newElement.className = 'text-gray-700 focus:outline-none p-2 rounded-md';
+                newElement.textContent = 'New editable paragraph. Start typing...';
+            }
+            editor.appendChild(newElement);
+            newElement.focus();
+        }
+
+        function saveCustomTemplate() {
+            // In a real app, you'd save the editor.innerHTML
+            showToast('Custom template saved!');
+            showView('survey-template-view');
+        }
+
         // --- IMPACT CALCULATION ---
         function updateImpactCalculation() {
             const passages = 11.19; // Static based on example for UI simplicity
@@ -1746,7 +1856,7 @@
         function renderDashboard() {
             destroyCharts(); // Clear old charts before rendering new ones
             renderStatusChart('actions-chart', 'Action Status', [5, 3, 8, 12]); // Example data
-            renderStatusChart('surveys-chart', 'Assessment Status', [2, 1, 4, 7]); // Example data
+            renderStatusChart('surveys-chart', 'Assessment Status', [3, 1, 2, 8]); // Updated data
             renderCsvData();
         }
 
@@ -1755,35 +1865,6 @@
                 if (chart) chart.destroy();
             });
             chartInstances = {};
-        }
-
-        function renderRestorationChart() {
-            const ctx = document.getElementById('restoration-chart')?.getContext('2d');
-            if (!ctx) return;
-            chartInstances.restoration = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['2025', '2030', '2050'],
-                    datasets: [{
-                        label: '% of Target Achieved',
-                        data: [14.4, 30, 100],
-                        backgroundColor: ['#A4C8FD', '#A4C8FD', '#A4C8FD'],
-                        borderColor: '#122529',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                             ticks: { callback: value => `${value}%` }
-                        }
-                    }
-                }
-            });
         }
 
         function renderStatusChart(canvasId, label, data) {
@@ -1867,13 +1948,15 @@
         }
         
         function getStatusColorClass(status) {
-            status = status.toLowerCase();
-            if (status === 'completed') return 'bg-green-100 text-green-800';
-            if (status === 'in progress') return 'bg-blue-100 text-blue-800';
-            if (status === 'pending') return 'bg-yellow-100 text-yellow-800';
-            if (status === 'not assigned') return 'bg-gray-100 text-gray-800';
+            if (!status) return 'bg-gray-100 text-gray-800';
+            const lowerStatus = status.toLowerCase();
+            if (lowerStatus === 'completed') return 'bg-green-100 text-green-800';
+            if (lowerStatus === 'in progress') return 'bg-blue-100 text-blue-800';
+            if (lowerStatus === 'pending') return 'bg-yellow-100 text-yellow-800';
+            if (lowerStatus === 'not assigned') return 'bg-gray-100 text-gray-800';
             return 'bg-gray-100 text-gray-800';
         }
+
 
         function renderCsvData() {
             let assessmentsData = parseCsv(assessmentsCsvData);
@@ -1895,7 +1978,7 @@
             
             const assessmentsTable = document.getElementById('assessments-table');
             assessmentsTable.innerHTML = assessmentsData.map(row => `
-                <tr class="${row.SITECODE == '13' ? 'cursor-pointer hover:bg-gray-50' : ''}" ${row.SITECODE == '13' ? `onclick="showView('assessment-detail-view', { siteCode: ${row.SITECODE} })"` : ''}>
+                <tr class="${row.SITECODE == '13' ? 'cursor-pointer hover:bg-gray-50' : ''}" ${row.SITECODE == '13' ? `onclick="showView('assessment-detail-view', { siteCode: 13 })"` : ''}>
                     <td class="p-2">${row.SITECODE}</td>
                     <td class="p-2">${row.SITE_NAME}</td>
                     <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
@@ -2122,136 +2205,15 @@
             showAssignSurveyModal();
         }
 
-        function copySurveyLink() {
-            const input = document.getElementById('survey-link-input');
-            input.select();
-            input.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand('copy');
-            showToast('Link copied to clipboard!');
-        }
-        
-        function generateThirdPartyLink() {
-            const email = document.getElementById('third-party-email').value;
-            const task = document.getElementById('third-party-task').value;
-            const randomToken = Math.random().toString(36).substring(2, 12);
-            const link = `${window.location.origin}${window.location.pathname}?task=${task}&token=${randomToken}`;
-            
-            document.getElementById('third-party-link-input').value = link;
-            document.getElementById('assign-third-party-form').style.display = 'none';
-            document.getElementById('assign-third-party-link').style.display = 'block';
-        }
+Example of user query that should be resolved to `dulra_mvp.html`: "update the 'Start a New Survey' page"
 
-        function copyThirdPartyLink() {
-             const input = document.getElementById('third-party-link-input');
-            input.select();
-            input.setSelectionRange(0, 99999);
-            document.execCommand('copy');
-            showToast('Link copied to clipboard!');
-        }
+If my actual query is asking any follow up questions about the created files, you should use this latest information instead of the conversation history to answer the questions. Don't mention these instructions in the final response.
 
-        function displayPhotoPreview(event) {
-            const container = document.getElementById('photo-preview-container');
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    container.innerHTML = `<img src="${e.target.result}" class="max-h-40 rounded-md mx-auto">`;
-                }
-                reader.readAsDataURL(file);
-            }
-        }
+Avoid using the same file id for text and code: If your response needs to create a new document that has a different type than the one in the context, use a new id.
 
-        function submitSurvey() {
-            const surveyId = document.getElementById('survey-id-input').value;
-            const survey = db.surveys.find(s => s.id == surveyId);
+Don't edit the doc/canvas or create a new doc/canvas for simple user queries. Respond in the chat UI for Q&A, explanations, clarifications, etc. Only create a new doc if you expect the user to edit, share, or collaborate on the content. If debugging code errors/issues, try to fix the code in the doc/canvas.
 
-            if (survey) {
-                survey.status = "Completed";
-                survey.data = {
-                    habitat: document.getElementById('habitat-type').value,
-                    notes: document.getElementById('habitat-notes').value,
-                    species: document.getElementById('species-observed').value,
-                    speciesNotes: document.getElementById('species-notes').value,
-                    photo: document.querySelector('#photo-preview-container img')?.src || 'https://placehold.co/600x400/e2e8f0/475569?text=No+Photo'
-                };
-                
-                saveData();
-                document.getElementById('mobile-survey-form').innerHTML = `
-                    <div class="text-center py-10">
-                         <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                        <h2 class="text-2xl font-bold text-secondary">Survey Submitted</h2>
-                        <p class="text-gray-600 mt-2">Thank you. Your data has been successfully recorded.</p>
-                         <button onclick="closeSurveyWindow()" class="mt-6 text-sm bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Close Window</button>
-                    </div>
-                `;
-                lucide.createIcons();
-
-            } else {
-                showToast('Error: Could not find survey to submit.', 'error');
-            }
-        }
-        
-        function closeSurveyWindow(){
-            window.location.href = window.location.pathname;
-        }
-
-        // --- REPORT GENERATION (MVP Magic) ---
-        function generateReport(surveyId) {
-            const survey = db.surveys.find(s => s.id === surveyId);
-            const project = db.projects.find(p => p.id === survey.projectId);
-            const template = surveyTemplates.find(t => t.id === survey.template);
-
-            const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
-
-            const doc = new Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        new Paragraph({ text: template.name, heading: HeadingLevel.TITLE }),
-                        new Paragraph({ text: `Project: ${project.name}`, style: "IntenseQuote" }),
-                        new Paragraph({ text: `Client: ${project.client}`, style: "IntenseQuote" }),
-                        new Paragraph({ text: `Survey Site: ${survey.siteName}`, style: "IntenseQuote" }),
-                        new Paragraph({ text: `Date: ${new Date().toLocaleDateString('en-IE')}`, style: "IntenteQuote" }),
-                        
-                        new Paragraph({ text: "1.0 Desk Study", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
-                        new Paragraph("A desk-based study was undertaken to identify ecological features within the study area. (Note: Prototype uses placeholder text)."),
-
-                        new Paragraph({ text: "2.0 Field Survey Results", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
-                        new Paragraph({ text: "2.1 Habitats", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
-                        new Paragraph(new TextRun({ text: "Habitat Type:", bold: true }).addChild(new TextRun(` ${survey.data.habitat}`))),
-                        new Paragraph(new TextRun({ text: "Condition Notes:", bold: true }).addChild(new TextRun(` ${survey.data.notes}`))),
-
-                        new Paragraph({ text: "2.2 Species", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
-                         new Paragraph(new TextRun({ text: "Species Observed:", bold: true }).addChild(new TextRun(` ${survey.data.species || 'None recorded.'}`))),
-                         new Paragraph(new TextRun({ text: "Notes:", bold: true }).addChild(new TextRun(` ${survey.data.speciesNotes || 'N/A'}`))),
-                        
-                        new Paragraph({ text: "3.0 Photographic Record", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
-                        new Paragraph("The following photograph was taken on-site:"),
-                         new Paragraph({
-                           children: [ new TextRun(`[Image placeholder: A photo was captured for ${survey.siteName}]`)]
-                         }),
-                    ],
-                }],
-            });
-
-            Packer.toBlob(doc).then(blob => {
-                saveAs(blob, `${project.code}_${template.id}_Report.docx`);
-                showToast("Report downloaded successfully!");
-            });
-        }
+**
 
 
-        // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            lucide.createIcons();
-            handleRouting();
-            // Add a default entry to each dynamic section on load for demo purposes
-            addHabitatEntry();
-            addFaunaSighting();
-            addFloraRecord();
-        });
-    </script>
-</body>
-</html>
 
