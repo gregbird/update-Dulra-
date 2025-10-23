@@ -82,6 +82,26 @@
             font-weight: 500;
             white-space: nowrap;
         }
+        /* Style for Assessment Detail Tables */
+        #assessment-detail-view table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        #assessment-detail-view th,
+        #assessment-detail-view td {
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+        #assessment-detail-view th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        #assessment-detail-view tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
     </style>
 </head>
 <body class="text-secondary">
@@ -980,31 +1000,67 @@
                                 <p class="text-sm text-gray-500">Area: <span id="assessment-area"></span> ha</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                             <div>
-                                <h3 class="text-xl font-bold text-secondary mb-3">Key Habitats</h3>
-                                <ul id="assessment-habitats" class="list-disc list-inside space-y-1 text-gray-700">
-                                    <!-- Habitat data will be injected here -->
-                                </ul>
-                                <h3 class="text-xl font-bold text-secondary mt-6 mb-3">Key Species</h3>
-                                <ul id="assessment-species" class="list-disc list-inside space-y-1 text-gray-700">
-                                    <!-- Species data will be injected here -->
-                                </ul>
-                             </div>
+
+                        <!-- Map and Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                              <div>
                                 <h3 class="text-xl font-bold text-secondary mb-3">Site Map</h3>
                                  <div id="assessment-map" class="mt-2 text-center border rounded-md relative aspect-video bg-gray-200 flex items-center justify-center cursor-pointer" onclick="showMapDetail(event)">
-                                    <img src="https://placehold.co/600x400/e2e8f0/475569?text=Rossbehy+Site+Map" alt="Site Map Placeholder" class="w-full h-full object-cover rounded-md">
+                                    <img src="https://placehold.co/600x400/e2e8f0/475569?text=Rossbehy+Overview+Map+(Fig+1)" alt="Site Map Placeholder" class="w-full h-full object-cover rounded-md">
                                     <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/30">
                                         <p class="text-white text-lg font-semibold">Click to explore</p>
                                     </div>
                                     <!-- Clickable zones for simulation -->
-                                    <div class="absolute top-1/4 left-1/4 w-1/4 h-1/4" data-info="Dune System"></div>
-                                    <div class="absolute bottom-1/4 right-1/4 w-1/4 h-1/4" data-info="Saltmarsh"></div>
+                                    <div class="absolute top-1/4 left-1/4 w-1/4 h-1/4" data-info="Sand Dunes (Habitats: 2110, 2120)"></div>
+                                    <div class="absolute bottom-1/4 right-1/4 w-1/4 h-1/4" data-info="Saltmarsh (Habitats: 1330, 1410)"></div>
                                 </div>
                                 <p id="map-detail-info" class="text-sm text-center mt-2 text-gray-600 h-6"></p>
                              </div>
+                             <div>
+                                <h3 class="text-xl font-bold text-secondary mb-3">Key Habitats & Species</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="font-semibold text-secondary">Habitats</h4>
+                                        <ul id="assessment-habitats" class="list-disc list-inside space-y-1 text-gray-700 text-sm"></ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-secondary">Species</h4>
+                                        <ul id="assessment-species" class="list-disc list-inside space-y-1 text-gray-700 text-sm"></ul>
+                                     </div>
+                                </div>
+                             </div>
                         </div>
+
+                        <!-- Tables from Docx -->
+                         <div class="space-y-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-secondary mb-3">Table 1: Habitats at Site 13 Rossbehy</h3>
+                                <div class="overflow-x-auto">
+                                    <table id="rossbehy-table-1"></table>
+                                </div>
+                            </div>
+                             <div>
+                                <h3 class="text-xl font-bold text-secondary mb-3">Table 2: Species at Site 13 Rossbehy</h3>
+                                 <div class="overflow-x-auto">
+                                    <table id="rossbehy-table-2"></table>
+                                </div>
+                            </div>
+                             <div>
+                                <h3 class="text-xl font-bold text-secondary mb-3">Table 3: Conservation Objectives for Site 13 Rossbehy</h3>
+                                <div class="overflow-x-auto">
+                                    <table id="rossbehy-table-3"></table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Simulated Document View -->
+                        <div class="mt-12 border-t pt-8">
+                             <h3 class="text-xl font-bold text-secondary mb-4">Full Assessment Document (Excerpt)</h3>
+                             <div id="rossbehy-doc-content" class="prose max-w-none text-sm bg-gray-50 p-4 rounded-md border max-h-96 overflow-y-auto">
+                                <!-- Content added by JS -->
+                             </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1189,6 +1245,7 @@
             db = storedDb ? JSON.parse(storedDb) : JSON.parse(JSON.stringify(defaultDb));
         }
 
+        // Updated Survey Templates based on PRD
         const surveyTemplates = [
             { id: "PEA", name: "Preliminary Ecological Appraisal", description: "A baseline ecological assessment.", icon: "clipboard-list" },
             { id: "EcIA", name: "Ecological Impact Assessment", description: "Assess potential project impacts.", icon: "alert-triangle" },
@@ -1200,6 +1257,7 @@
             { id: "Invasive", name: "Invasive Species Survey", description: "Mapping and management plans.", icon: "bug" },
             { id: "ECoW", name: "ECoW Report", description: "Ecological Clerk of Works monitoring.", icon: "user-check" }
         ];
+
 
         let currentProjectId = null;
         let currentProjectTab = 'surveys';
@@ -1241,6 +1299,8 @@
                 const survey = db.surveys.find(s => s.id == surveyId);
                 if(survey) {
                     showView('survey-form-view', survey.id);
+                } else {
+                     showView('dashboard-view'); // Fallback if survey ID invalid
                 }
             } else {
                 showView('dashboard-view'); // Default to dashboard
@@ -1358,12 +1418,12 @@
                     <div id="survey-list" class="space-y-4">
                     ${projectSurveys.length > 0 ? projectSurveys.map(s => {
                         const statusColors = { 'Ready': 'bg-blue-100 text-blue-800', 'In Progress': 'bg-yellow-100 text-yellow-800', 'Completed': 'bg-green-100 text-green-800' };
-                        const statusColor = statusColors[s.status] || 'bg-gray-100 text-gray-800';
+                        const statusColor = getStatusColorClass(s.status); // Use helper
                         return `
                         <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center">
                             <div>
                                 <p class="font-semibold text-secondary">${s.siteName} <span class="text-xs font-normal text-gray-500 ml-2">(${s.template})</span></p>
-                                <span class="text-xs font-medium px-2.5 py-0.5 rounded ${statusColor}">${s.status}</span>
+                                <span class="status-badge ${statusColor}">${s.status}</span>
                             </div>
                             <div class="flex items-center space-x-2">
                                 ${s.status === 'Ready' ? `<button onclick="assignSurvey(${s.id})" class="text-sm bg-accent text-white py-1 px-3 rounded-md hover:bg-orange-500">Assign</button>` : ''}
@@ -1407,21 +1467,86 @@
             // --- Simulate Habitat and Species Data for Rossbehy ---
             const habitatsList = document.getElementById('assessment-habitats');
             const speciesList = document.getElementById('assessment-species');
+            const table1 = document.getElementById('rossbehy-table-1');
+            const table2 = document.getElementById('rossbehy-table-2');
+            const table3 = document.getElementById('rossbehy-table-3');
+            const docContent = document.getElementById('rossbehy-doc-content');
             
             // Based on Rossbehy.docx
             if (siteCode == 13) {
                  habitatsList.innerHTML = `
-                    <li>Sand dunes</li>
-                    <li>Saltmarsh</li>
+                    <li>Fixed coastal dunes with herbaceous vegetation (grey dunes) (* priority habitat) (2130)</li>
+                    <li>Embryonic shifting dunes (2110)</li>
+                    <li>Shifting dunes along the shoreline with Ammophila arenaria (white dunes) (2120)</li>
+                    <li>Atlantic salt meadows (Glauco-Puccinellietalia maritimae) (1330)</li>
+                    <li>Mediterranean salt meadows (Juncetalia maritimi) (1410)</li>
                  `;
                  speciesList.innerHTML = `
-                    <li>(Simulated) Wintering birds (e.g., Light-bellied Brent Goose)</li>
-                    <li>(Simulated) Various dune flora</li>
-                    <li>(Simulated) Various saltmarsh flora</li>
+                    <li>Light-bellied Brent Goose (Branta bernicla hrota) [A046]</li>
+                    <li>Common Scoter (Melanitta nigra) [A065]</li>
+                    <li>Red-breasted Merganser (Mergus serrator) [A069]</li>
+                    <li>Ringed Plover (Charadrius hiaticula) [A137]</li>
+                    <li>Sanderling (Calidris alba) [A144]</li>
+                    <li>Bar-tailed Godwit (Limosa lapponica) [A157]</li>
+                    <li>Curlew (Numenius arquata) [A160]</li>
+                    <li>Redshank (Tringa totanus) [A162]</li>
+                    <li>Turnstone (Arenaria interpres) [A169]</li>
+                    <li>Wetland and Waterbirds [A999]</li>
                  `;
+                
+                // Populate Tables (simplified data extraction)
+                table1.innerHTML = `
+                    <thead><tr><th>Habitat Code</th><th>Habitat Name</th><th>Area (ha)</th><th>Subsite</th></tr></thead>
+                    <tbody>
+                        <tr><td>2130</td><td>Fixed coastal dunes*</td><td>10.39</td><td>1</td></tr>
+                        <tr><td>2110</td><td>Embryonic shifting dunes</td><td>0.09</td><td>1</td></tr>
+                        <tr><td>2120</td><td>Shifting dunes (white dunes)</td><td>9.60</td><td>1</td></tr>
+                        <tr><td>1330</td><td>Atlantic salt meadows</td><td>14.16</td><td>2</td></tr>
+                        <tr><td>1410</td><td>Mediterranean salt meadows</td><td>55.57</td><td>2</td></tr>
+                    </tbody>
+                `;
+                 table2.innerHTML = `
+                    <thead><tr><th>Species Code</th><th>Species Name</th><th>Population/Range</th><th>Subsite</th></tr></thead>
+                    <tbody>
+                        <tr><td>A046</td><td>Light-bellied Brent Goose</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A065</td><td>Common Scoter</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A069</td><td>Red-breasted Merganser</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A137</td><td>Ringed Plover</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A144</td><td>Sanderling</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A157</td><td>Bar-tailed Godwit</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A160</td><td>Curlew</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A162</td><td>Redshank</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A169</td><td>Turnstone</td><td>Population</td><td>-</td></tr>
+                        <tr><td>A999</td><td>Wetland and Waterbirds</td><td>Range</td><td>-</td></tr>
+                    </tbody>
+                 `;
+                  table3.innerHTML = `
+                    <thead><tr><th>Habitat Code</th><th>Conservation Objective</th><th>Target</th></tr></thead>
+                    <tbody>
+                        <tr><td>2130</td><td>Restore favourable conservation condition</td><td>Restore</td></tr>
+                        <tr><td>2110</td><td>Maintain favourable conservation condition</td><td>Maintain</td></tr>
+                        <tr><td>2120</td><td>Restore favourable conservation condition</td><td>Restore</td></tr>
+                         <tr><td>1330</td><td>Restore favourable conservation condition</td><td>Restore</td></tr>
+                        <tr><td>1410</td><td>Restore favourable conservation condition</td><td>Restore</td></tr>
+                        <!-- Add species objectives if needed -->
+                    </tbody>
+                 `;
+
+                 // Simulate document content
+                 docContent.innerHTML = `
+                    <h4 class="font-bold">Site Description</h4>
+                    <p>Rossbehy is a large site covering almost 92ha located approximately 1.2km to the north-west of Glenbeigh, Co. Kerry, on the southern shore of Dingle Bay. The site comprises a sand spit which extends northwards into Dingle Bay and an area of saltmarsh which occurs behind (to the east of) the sand dunes. The dunes at Rossbehy occur to the south of the Inch dune system which extends south from the northern shore of Dingle Bay. Almost the entire site (99.7% or 91.71ha) occurs within the Castlemaine Harbour SAC (000343) (Figure 1), while 94% (86.76ha) of the site occurs within the  Castlemaine Harbour SPA (004029)...</p>
+                    <h4 class="font-bold mt-4">Habitats</h4>
+                    <p>Five Annex I habitats occur at Rossbehy including one priority habitat Fixed coastal dunes with herbaceous vegetation (grey dunes) (2130) (Table 1). There is also Embryonic shifting dunes (2110), Shifting dunes along the shoreline with Ammophila arenaria (white dunes) (2120), Atlantic salt meadows (Glauco-Puccinellietalia maritimae) (1330) and Mediterranean salt meadows (Juncetalia maritimi) (1410). Combined, these habitats cover 91.7% of the site (84.1ha). The fixed dunes are the largest habitat at the site and cover 10.39ha, followed by the white dunes (9.60ha), and the embryonic dunes (0.09ha). The Atlantic salt meadows cover 14.16ha, and the Mediterranean salt meadows cover 55.57ha...</p>
+                 `;
+
             } else {
                  habitatsList.innerHTML = `<li>Placeholder Habitat 1</li><li>Placeholder Habitat 2</li>`;
                  speciesList.innerHTML = `<li>Placeholder Species A</li><li>Placeholder Species B</li>`;
+                 table1.innerHTML = `<tr><td>No data available for this site.</td></tr>`;
+                 table2.innerHTML = `<tr><td>No data available for this site.</td></tr>`;
+                 table3.innerHTML = `<tr><td>No data available for this site.</td></tr>`;
+                 docContent.innerHTML = `<p>No document data available for this site.</p>`;
             }
         }
         
@@ -1763,7 +1888,10 @@
                 HA: '91.71', // From docx
                 Link: '#' // Placeholder link
             };
-            assessmentsData.push(rossbehyAssessment);
+            // Check if Rossbehy already exists to avoid duplicates on re-render
+            if (!assessmentsData.some(item => item.SITECODE === '13')) {
+                assessmentsData.push(rossbehyAssessment);
+            }
             
             const assessmentsTable = document.getElementById('assessments-table');
             assessmentsTable.innerHTML = assessmentsData.map(row => `
@@ -1778,7 +1906,7 @@
             const actionsTable = document.getElementById('actions-table');
             actionsTable.innerHTML = actionsData.map(row => `
                 <tr>
-                    <td class="p-2">${row.SITECODE}</td>
+                     <td class="p-2">${row.SITECODE}</td>
                     <td class="p-2">${row.SITE_NAME}</td>
                     <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
                     <td class="p-2">${row['ActionType']}</td>
