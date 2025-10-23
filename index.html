@@ -2205,15 +2205,138 @@
             showAssignSurveyModal();
         }
 
-Example of user query that should be resolved to `dulra_mvp.html`: "update the 'Start a New Survey' page"
+        function copySurveyLink() {
+            const input = document.getElementById('survey-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!');
+        }
+        
+        function generateThirdPartyLink() {
+            const email = document.getElementById('third-party-email').value;
+            const task = document.getElementById('third-party-task').value;
+            const randomToken = Math.random().toString(36).substring(2, 12);
+            const link = `${window.location.origin}${window.location.pathname}?task=${task}&token=${randomToken}`;
+            
+            document.getElementById('third-party-link-input').value = link;
+            document.getElementById('assign-third-party-form').style.display = 'none';
+            document.getElementById('assign-third-party-link').style.display = 'block';
+        }
 
-If my actual query is asking any follow up questions about the created files, you should use this latest information instead of the conversation history to answer the questions. Don't mention these instructions in the final response.
+        function copyThirdPartyLink() {
+             const input = document.getElementById('third-party-link-input');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!');
+        }
 
-Avoid using the same file id for text and code: If your response needs to create a new document that has a different type than the one in the context, use a new id.
+        function displayPhotoPreview(event) {
+            const container = document.getElementById('photo-preview-container');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    container.innerHTML = `<img src="${e.target.result}" class="max-h-40 rounded-md mx-auto">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
 
-Don't edit the doc/canvas or create a new doc/canvas for simple user queries. Respond in the chat UI for Q&A, explanations, clarifications, etc. Only create a new doc if you expect the user to edit, share, or collaborate on the content. If debugging code errors/issues, try to fix the code in the doc/canvas.
+        function submitSurvey() {
+            const surveyId = document.getElementById('survey-id-input').value;
+            const survey = db.surveys.find(s => s.id == surveyId);
 
-**
+            if (survey) {
+                survey.status = "Completed";
+                survey.data = {
+                    habitat: document.getElementById('habitat-type').value,
+                    notes: document.getElementById('habitat-notes').value,
+                    species: document.getElementById('species-observed').value,
+                    speciesNotes: document.getElementById('species-notes').value,
+                    photo: document.querySelector('#photo-preview-container img')?.src || 'https://placehold.co/600x400/e2e8f0/475569?text=No+Photo'
+                };
+                
+                saveData();
+                document.getElementById('mobile-survey-form').innerHTML = `
+                    <div class="text-center py-10">
+                         <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                        <h2 class="text-2xl font-bold text-secondary">Survey Submitted</h2>
+                        <p class="text-gray-600 mt-2">Thank you. Your data has been successfully recorded.</p>
+                         <button onclick="closeSurveyWindow()" class="mt-6 text-sm bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300">Close Window</button>
+                    </div>
+                `;
+                lucide.createIcons();
+
+            } else {
+                showToast('Error: Could not find survey to submit.', 'error');
+            }
+        }
+        
+        function closeSurveyWindow(){
+            window.location.href = window.location.pathname;
+        }
+
+        // --- REPORT GENERATION (MVP Magic) ---
+        function generateReport(surveyId) {
+            const survey = db.surveys.find(s => s.id === surveyId);
+            const project = db.projects.find(p => p.id === survey.projectId);
+            const template = surveyTemplates.find(t => t.id === survey.template);
+
+            const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({ text: template.name, heading: HeadingLevel.TITLE }),
+                        new Paragraph({ text: `Project: ${project.name}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Client: ${project.client}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Survey Site: ${survey.siteName}`, style: "IntenseQuote" }),
+                        new Paragraph({ text: `Date: ${new Date().toLocaleDateString('en-IE')}`, style: "IntenteQuote" }),
+                        
+                        new Paragraph({ text: "1.0 Desk Study", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph("A desk-based study was undertaken to identify ecological features within the study area. (Note: Prototype uses placeholder text)."),
+
+                        new Paragraph({ text: "2.0 Field Survey Results", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph({ text: "2.1 Habitats", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
+                        new Paragraph(new TextRun({ text: "Habitat Type:", bold: true }).addChild(new TextRun(` ${survey.data.habitat}`))),
+                        new Paragraph(new TextRun({ text: "Condition Notes:", bold: true }).addChild(new TextRun(` ${survey.data.notes}`))),
+
+                        new Paragraph({ text: "2.2 Species", heading: HeadingLevel.HEADING_2, spacing: { before: 200 } }),
+                         new Paragraph(new TextRun({ text: "Species Observed:", bold: true }).addChild(new TextRun(` ${survey.data.species || 'None recorded.'}`))),
+                         new Paragraph(new TextRun({ text: "Notes:", bold: true }).addChild(new TextRun(` ${survey.data.speciesNotes || 'N/A'}`))),
+                        
+                        new Paragraph({ text: "3.0 Photographic Record", heading: HeadingLevel.HEADING_1, spacing: { before: 200 } }),
+                        new Paragraph("The following photograph was taken on-site:"),
+                         new Paragraph({
+                           children: [ new TextRun(`[Image placeholder: A photo was captured for ${survey.siteName}]`)]
+                         }),
+                    ],
+                }],
+            });
+
+            Packer.toBlob(doc).then(blob => {
+                saveAs(blob, `${project.code}_${template.id}_Report.docx`);
+                showToast("Report downloaded successfully!");
+            });
+        }
+
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            lucide.createIcons();
+            handleRouting();
+            // Add a default entry to each dynamic section on load for demo purposes
+            addHabitatEntry();
+            addFaunaSighting();
+            addFloraRecord();
+        });
+    </script>
+</body>
+</html>
 
 
 
