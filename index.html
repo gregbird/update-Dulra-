@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dulra - Ecological Reporting</title>
+    <title>Dulra - Ecological Management Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -127,7 +127,7 @@
             <nav class="p-4 flex-1">
                 <button onclick="showView('survey-template-view')" class="w-full bg-primary text-secondary py-2.5 px-4 rounded-md hover:brightness-95 flex items-center space-x-2 justify-center text-sm font-semibold">
                     <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span>Create a Survey</span>
+                    <span>Create a Site Task</span>
                 </button>
                 <div class="mt-6">
                     <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Workspace</h3>
@@ -142,12 +142,12 @@
                         </button>
                         <button onclick="showView('my-surveys-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
                              <i data-lucide="folder" class="w-5 h-5"></i>
-                            <span>My Surveys</span>
+                            <span>Surveys</span>
                         </button>
                     </div>
                 </div>
                  <div class="mt-6">
-                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</h3>
+                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools for Surveys</h3>
                     <div class="mt-2 space-y-1">
                         <button onclick="showView('gis-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
                             <i data-lucide="map" class="w-5 h-5"></i>
@@ -217,19 +217,19 @@
                              <div class="space-y-3">
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Total Assessments</span>
-                                    <span class="font-bold text-secondary text-lg" id="total-assessments-stat">0</span>
+                                    <span class="font-bold text-secondary text-lg" id="total-assessments-stat">160</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Habitats Favourable</span>
-                                    <span class="font-bold text-status-favourable text-lg" id="habitats-favourable-stat">0</span>
+                                    <span class="font-bold text-status-favourable text-lg" id="habitats-favourable-stat">130</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Habitats Unfavourable</span>
-                                    <span class="font-bold text-status-bad text-lg" id="habitats-unfavourable-stat">0</span>
+                                    <span class="font-bold text-status-bad text-lg" id="habitats-unfavourable-stat">20</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Species Favourable</span>
-                                    <span class="font-bold text-status-favourable text-lg" id="species-favourable-stat">0</span>
+                                    <span class="text-gray-600">Habitats Inadequate</span>
+                                    <span class="font-bold text-status-favourable text-lg" id="species-favourable-stat">10</span>
                                 </div>
                              </div>
                         </div>
@@ -264,7 +264,7 @@
                             </div>
                             <button class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
                                 <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                                <span>Create Task</span>
+                                <span>Detailed Search</span>
                             </button>
                         </div>
                     </div>
@@ -338,7 +338,7 @@
                 <div id="my-surveys-view" class="view p-4 md:p-8">
                     <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
                         <div>
-                            <h2 class="text-3xl font-bold text-secondary">My Surveys</h2>
+                            <h2 class="text-3xl font-bold text-secondary">Surveys</h2>
                             <p class="text-gray-500">An overview of all your active and completed surveys.</p>
                         </div>
                          <button onclick="showView('survey-template-view')" class="bg-primary text-secondary py-2 px-4 rounded-md hover:brightness-95 flex items-center space-x-2 w-full md:w-auto">
@@ -355,7 +355,7 @@
                 <div id="project-detail-view" class="view p-4 md:p-8">
                     <button onclick="showView('my-surveys-view')" class="text-sm text-accent mb-4 flex items-center space-x-1">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                        <span>Back to My Surveys</span>
+                        <span>Back to Surveys</span>
                     </button>
                     <div class="bg-surface p-6 rounded-lg shadow-md">
                         <div class="mb-6">
@@ -651,7 +651,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label for="site-name" class="block text-sm font-medium text-gray-700">Site Name / Reference</label>
-                                <input type="text" id="site-name" value="Ballycroy Wind Farm" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <input type="text" id="site-name" value="Lough Ennell SAC" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
                             </div>
                              <div>
                                 <label for="site-code" class="block text-sm font-medium text-gray-700">Site Code (e.g., SAC/SPA Code)</label>
@@ -679,13 +679,13 @@
                             <div class="loading-spinner"></div>
                          </div>
                         <div id="datamine-results-content">
-                            <h3 class="text-2xl font-bold text-gray-700 mb-4">Data Mine Results for "Ballycroy Wind Farm"</h3>
+                            <h3 class="text-2xl font-bold text-gray-700 mb-4">Data Mine Results for "Lough Ennell SAC"</h3>
                             <div class="space-y-6">
                                 <!-- Existing Reports -->
                                 <div class="bg-surface p-6 rounded-lg shadow-md">
                                     <h4 class="font-semibold text-lg text-secondary">Existing Reports / Records</h4>
                                     <ul class="list-disc list-inside mt-2 text-gray-600">
-                                        <li>Ballycroy Area Wind Feasibility Study (2021) - GreenEnergy Ltd.</li>
+                                        <li>Lough Ennell SAC Study (2021) - Green Project</li>
                                         <li>NPWS Species Records for Grid Ref F890 105 (2019-2023)</li>
                                     </ul>
                                 </div>
@@ -999,7 +999,7 @@
                                             <label for="audience-tone" class="block text-xs font-medium text-gray-600 mb-1">Audience Tone</label>
                                             <select id="audience-tone" class="w-full text-sm px-3 py-2 border border-gray-300 rounded-md">
                                                 <option>Technical (Internal)</option>
-                                                <option>Public / Funding</option>
+                                                <option>Public </option>
                                                 <option>Investor</option>
                                             </select>
                                         </div>
@@ -1278,7 +1278,7 @@
         let db;
         const defaultDb = {
             projects: [
-                { id: 1, name: "N59 Road Realignment", client: "Galway County Council", code: "GCC-001-25" },
+                { id: 1, name: "Lough Ennell SAC", client: "NPWS", code: "NPWS-001-25" },
             ],
             surveys: [
                 { id: 101, projectId: 1, siteName: "Site A - Woodland", template: "PEA", status: "Completed", data: { habitat: "WD1 - Oak-birch-holly woodland", notes: "Mature oak canopy, limited undergrowth.", species: "Sciurus vulgaris (Red Squirrel)", photo: "https://placehold.co/600x400/a3e635/ffffff?text=Woodland+Canopy" } },
@@ -1940,7 +1940,28 @@ Lough Namucka Bog NHA,220,Completed,Galway,221.0`;
 9,Slieve Rushen Bog NHA,Not Assigned,Cavan,674.7,https://www.npws.ie/protected-sites/nha/000009
 151,Inishduff NHA,Pending,Donegal,46.5,https://www.npws.ie/protected-sites/nha/000151
 184,Roaninish NHA,In Progress,Donegal,145.8,https://www.npws.ie/protected-sites/nha/000184
-220,Lough Namucka Bog NHA,Completed,Galway,221.0,https://www.npws.ie/protected-sites/nha/000220`;
+220,Lough Namucka Bog NHA,Completed,Galway,221.0,https://www.npws.ie/protected-sites/nha/000220
+6, Killyconny Bog (Cloghbally) SAC,Pending, Cavan, 284,
+7, Lough Oughter and Associated Loughs SAC, Completed, Galway, 898,
+4, Ballyallia Lake SAC, Completed, Galway, 897,
+10, Ballycullinan Lake SAC, Completed, Galway, 798, 
+20, Black Head/Poulsallagh Complex, Completed, Donegal,199,
+90, Danes Hole Poulnalecka SAC, Completed, Mayo, 7889
+32, Dromore Woods & Loughs, Completed, Cork, 8978,
+37, Pouladatig Cave 1999,  Completed, Cork, 879,
+51, Lough Gash Turlough SAC, Completed, Cork, 878,
+54, Moneen Mountain 1997, Completed, Limerick, 9889,
+57, Moyree River System, Completed, Cork, 878,
+64, Poulnagordon Cave (Quin) SAC, Completed, Cork, 878,
+77, Ballymacoda(Clonpriest and Pillmore)SAC, Completed, Cork, 7768,
+90, Glengarriff Harbour and Woodland, Completed, Cork, 756,
+91, Clonakilty Bay SAC, Completed, Mayo, 435,
+93, Caha Mountains SAC, Completed, Donegal, 426,
+97, Lough Hyne Nature Reserve and Environs SAC, Completed, Sligo, 549,
+101, Roaringwater Bay and Islands SAC, Completed, Sligo,470,
+106, St. Gobnet's Wood SAC, Completed, Donegal,216,
+109, Three Castle Head to Mizen Head, Completed, Donegal,540,
+111, Aran Island (Donegal) Cliffs SAC, Completed, Donegal, 613,`;
         
        const actionsCsvData = `SITECODE,SITE_NAME,Status,COUNTY,Action Type,Link to Survey
 245,Clooncullaun Bog NHA,In Progress,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000245
@@ -1952,7 +1973,28 @@ Lough Namucka Bog NHA,220,Completed,Galway,221.0`;
 280,Castle Ffrench West Bog NHA,Not Assigned,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000280
 281,Keeloges Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000281
 283,Kilmore Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000283
-284,Kilnaborris Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000284`;
+284,Kilnaborris Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000284
+6, Killyconny Bog (Cloghbally) SAC, Completed,Cavan, Site and habitat management,
+7, Lough Oughter and Associated Loughs SAC, Completed, Galway, Site and habitat management,
+4, Ballyallia Lake SAC, Completed,Galway, Site and habitat management,
+10, Ballycullinan Lake SAC, Completed, Galway,  Site and habitat management,
+20, Black Head/Poulsallagh Complex, Completed, Donegal,Site and habitat management,
+90, Danes Hole Poulnalecka SAC, Completed, Mayo, Site and habitat management,
+32, Dromore Woods & Loughs, Completed, Cork, Site and habitat management,
+37, Pouladatig Cave 1999,  Completed, Cork, Site and habitat management,
+51, Lough Gash Turlough SAC, Completed, Cork,Site and habitat management,
+54, Moneen Mountain 1997, Completed, Limerick, Site and habitat management,
+57, Moyree River System, Completed,Cork,Site and habitat management,
+64, Poulnagordon Cave (Quin) SAC, Completed, Cork, Site and habitat management,
+77, Ballymacoda(Clonpriest and Pillmore)SAC, Completed,Cork,  Site and habitat management,
+90, Glengarriff Harbour and Woodland, Completed,Cork, Site and habitat management,
+91, Clonakilty Bay SAC, Completed, Mayo, Site and habitat management,
+93, Caha Mountains SAC, Completed, Donegal, Site and habitat management,
+97, Lough Hyne Nature Reserve and Environs SAC,Completed, Sligo,  Site and habitat management,
+101, Roaringwater Bay and Islands SAC, Completed, Sligo,Site and habitat management,
+106, St. Gobnet's Wood SAC, Completed,Donegal,Site and habitat management
+109, Three Castle Head to Mizen Head, Completed, Donegal,Site and habitat management,
+111, Aran Island (Donegal) Cliffs SAC, Completed,Donegal,Site and habitat management,`;
         
         function parseCsv(csvString) {
             const rows = csvString.trim().split('\n');
