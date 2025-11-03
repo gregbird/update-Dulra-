@@ -25,6 +25,11 @@
               accent: '#FB923C',   // Orange for actions
               background: '#F3F7F9', // Background Light
               surface: '#FFFFFF',
+              status: {
+                  favourable: '#10B981', // Green
+                  inadequate: '#FBBF24', // Yellow
+                  bad: '#EF4444',        // Red
+              }
             },
           }
         }
@@ -142,7 +147,7 @@
                     </div>
                 </div>
                  <div class="mt-6">
-                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Project Tools</h3>
+                    <h3 class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</h3>
                     <div class="mt-2 space-y-1">
                         <button onclick="showView('gis-view')" class="w-full text-left flex items-center space-x-2 py-2 px-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
                             <i data-lucide="map" class="w-5 h-5"></i>
@@ -183,101 +188,99 @@
                 
                 <!-- NEW Dashboard View -->
                 <div id="dashboard-view" class="view active-view p-4 md:p-8">
-                    <h2 class="text-3xl font-bold text-secondary mb-6">Dashboard</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Top Row Charts -->
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-secondary">Dashboard</h2>
+                        <div class="flex space-x-2">
+                             <div class="relative">
+                                <input type="text" placeholder="Search tasks & surveys..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm">
+                                <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            </div>
+                            <button class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                <span>Create Task</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Row Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                          <div class="bg-surface p-6 rounded-lg shadow-md">
-                             <h3 class="font-semibold text-secondary">Action Status</h3>
-                             <canvas id="actions-chart"></canvas>
+                             <h3 class="font-semibold text-secondary text-center">Action Status</h3>
+                             <canvas id="actions-chart" class="max-h-48 mx-auto"></canvas>
                         </div>
                          <div class="bg-surface p-6 rounded-lg shadow-md">
-                             <h3 class="font-semibold text-secondary">Assessment Status</h3>
-                             <canvas id="surveys-chart"></canvas>
+                             <h3 class="font-semibold text-secondary text-center">Assessment Status</h3>
+                             <canvas id="surveys-chart" class="max-h-48 mx-auto"></canvas>
                         </div>
-
-                        <!-- Conservation Status Section -->
-                        <div class="lg:col-span-2 bg-surface p-6 rounded-lg shadow-md">
-                             <h3 class="text-xl font-bold text-secondary mb-4">Conservation Status</h3>
-                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <!-- SPA Column -->
-                                <div>
-                                    <h4 class="font-semibold text-center mb-2">Health of SPA's</h4>
-                                    <div class="bg-blue-50 p-4 rounded-lg">
-                                        <h5 class="font-medium text-blue-800">Habitats</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Area: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Structure & Functions: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
-                                        </ul>
-                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Population: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Habitat for Species: Bad</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
-                                        </ul>
-                                    </div>
+                        <div class="bg-surface p-6 rounded-lg shadow-md flex flex-col justify-center">
+                             <h3 class="font-semibold text-secondary mb-4">Key Stats</h3>
+                             <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Total Assessments</span>
+                                    <span class="font-bold text-secondary text-lg" id="total-assessments-stat">0</span>
                                 </div>
-                                <!-- SAC Column -->
-                                 <div>
-                                    <h4 class="font-semibold text-center mb-2">Health of SAC's</h4>
-                                    <div class="bg-blue-50 p-4 rounded-lg">
-                                        <h5 class="font-medium text-blue-800">Habitats</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Area: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Structure & Functions: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Future Prospects: Favourable</li>
-                                        </ul>
-                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Population: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Habitat for Species: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Future Prospects: Inadequate</li>
-                                        </ul>
-                                    </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Habitats Favourable</span>
+                                    <span class="font-bold text-status-favourable text-lg" id="habitats-favourable-stat">0</span>
                                 </div>
-                                 <!-- NHA Column -->
-                                 <div>
-                                    <h4 class="font-semibold text-center mb-2">Health of NHA's</h4>
-                                    <div class="bg-blue-50 p-4 rounded-lg">
-                                        <h5 class="font-medium text-blue-800">Habitats</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Range: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Area: Bad</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Structure & Functions: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Future Prospects: Bad</li>
-                                        </ul>
-                                         <h5 class="font-medium text-blue-800 mt-4">Species</h5>
-                                        <ul class="text-sm space-y-1 mt-2 text-gray-700">
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Range: Favourable</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Population: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span> Habitat for Species: Inadequate</li>
-                                            <li class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Future Prospects: Bad</li>
-                                        </ul>
-                                    </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Habitats Unfavourable</span>
+                                    <span class="font-bold text-status-bad text-lg" id="habitats-unfavourable-stat">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Species Favourable</span>
+                                    <span class="font-bold text-status-favourable text-lg" id="species-favourable-stat">0</span>
                                 </div>
                              </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- NEW Tasks View -->
-                <div id="tasks-view" class="view p-4 md:p-8">
-                    <h2 class="text-3xl font-bold text-secondary mb-4">Tasks</h2>
-                    <!-- Tabs -->
-                    <div class="border-b border-gray-200">
-                        <nav id="tasks-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
-                            <!-- Tab buttons will be injected here -->
-                        </nav>
-                    </div>
-                    <div id="tasks-tab-content" class="pt-6">
-                        <!-- Content for tabs will be injected here -->
+                    
+                    <!-- Conservation Site Status Table -->
+                    <div class="bg-surface p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold text-secondary mb-4">Conservation Site Status</h3>
+                        
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav id="site-status-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                <!-- Tab buttons will be injected here -->
+                            </nav>
+                        </div>
+                        
+                        <!-- Tab Content -->
+                        <div id="site-status-content" class="mt-4">
+                            <!-- Content for tabs will be injected here -->
+                        </div>
                     </div>
                 </div>
 
+                <!-- NEW Tasks View -->
+                <div id="tasks-view" class="view p-4 md:p-8">
+                     <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-secondary">Tasks</h2>
+                        <div class="flex space-x-2">
+                             <div class="relative">
+                                <input type="text" placeholder="Search tasks..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm">
+                                <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            </div>
+                            <button class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                <span>Create Task</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                     <!-- Tabs -->
+                    <div class="border-b border-gray-200">
+                        <nav id="tasks-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <!-- Task Tab buttons will be injected here -->
+                        </nav>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div id="tasks-content" class="mt-6">
+                        <!-- Content for task tabs will be injected here -->
+                    </div>
+                </div>
 
                 <!-- Survey Template Selection View -->
                 <div id="survey-template-view" class="view p-4 md:p-8">
@@ -314,11 +317,11 @@
                     </div>
                     <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md">
                         <div class="border-b pb-4 mb-4 flex items-center space-x-2">
-                            <button onclick="addTemplateElement('custom-template-editor', 'heading')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
+                            <button onclick="addTemplateElement('heading')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
                                 <i data-lucide="heading-1" class="w-4 h-4"></i>
                                 <span>Add Heading</span>
                             </button>
-                            <button onclick="addTemplateElement('custom-template-editor', 'paragraph')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
+                            <button onclick="addTemplateElement('paragraph')" class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md hover:bg-gray-300 text-sm flex items-center space-x-1">
                                 <i data-lucide="pilcrow" class="w-4 h-4"></i>
                                 <span>Add Paragraph</span>
                             </button>
@@ -380,21 +383,13 @@
                             <h2 class="text-2xl font-bold text-secondary">Ecological Impact Assessment Report (EIAR) Editor</h2>
                             <p id="eiar-editor-project-name" class="text-gray-500 mt-1"></p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                             <button onclick="addTemplateElement('eiar-editor-content', 'heading')" class="bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 text-sm">
-                                <i data-lucide="heading-1" class="w-5 h-5"></i>
-                            </button>
-                            <button onclick="addTemplateElement('eiar-editor-content', 'paragraph')" class="bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 text-sm">
-                                <i data-lucide="pilcrow" class="w-5 h-5"></i>
-                            </button>
-                            <button onclick="saveEiarSurvey()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
-                                <i data-lucide="save" class="w-5 h-5"></i>
-                                <span>Save and Continue</span>
-                            </button>
-                        </div>
+                        <button onclick="saveEiarSurvey()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Save and Continue</span>
+                        </button>
                     </div>
 
-                    <div id="eiar-editor-content" class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
                         
                         <!-- Chapter 1 -->
                         <div>
@@ -519,21 +514,13 @@
                             <h2 class="text-2xl font-bold text-secondary">Ecological Clerk of Works (ECoW) Report</h2>
                             <p id="ecow-editor-project-name" class="text-gray-500 mt-1"></p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                             <button onclick="addTemplateElement('ecow-editor-content', 'heading')" class="bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 text-sm">
-                                <i data-lucide="heading-1" class="w-5 h-5"></i>
-                            </button>
-                            <button onclick="addTemplateElement('ecow-editor-content', 'paragraph')" class="bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 text-sm">
-                                <i data-lucide="pilcrow" class="w-5 h-5"></i>
-                            </button>
-                            <button onclick="saveEcowReport()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
-                                <i data-lucide="save" class="w-5 h-5"></i>
-                                <span>Save and Continue</span>
-                            </button>
-                        </div>
+                        <button onclick="saveEcowReport()" class="bg-accent text-white py-2 px-4 rounded-md hover:bg-orange-500 flex items-center space-x-2">
+                            <i data-lucide="save" class="w-5 h-5"></i>
+                            <span>Save and Continue</span>
+                        </button>
                     </div>
 
-                    <div id="ecow-editor-content" class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div class="bg-surface p-6 md:p-8 rounded-lg shadow-md space-y-8">
                         <div>
                             <h3 contenteditable="true" class="text-xl font-bold text-secondary">1. Project Details</h3>
                              <div class="mt-4 space-y-4">
@@ -664,7 +651,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label for="site-name" class="block text-sm font-medium text-gray-700">Site Name / Reference</label>
-                                <input type="text" id="site-name" value="Killarney National Park SPA" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <input type="text" id="site-name" value="Ballycroy Wind Farm" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
                             </div>
                              <div>
                                 <label for="site-code" class="block text-sm font-medium text-gray-700">Site Code (e.g., SAC/SPA Code)</label>
@@ -1330,7 +1317,8 @@
         let currentProjectTab = 'surveys';
         let currentVisualisationTab = 'basic';
         let chartInstances = {}; // To hold chart objects
-        let currentTasksTab = 'assessments'; // NEW: For tasks page
+        let currentTasksTab = 'assessments';
+        let currentSiteStatusTab = 'sac';
 
         // --- VIEW MANAGEMENT ---
         const views = document.querySelectorAll('.view');
@@ -1341,7 +1329,7 @@
             document.querySelector('main').scrollTo(0, 0);
 
             if (viewId === 'dashboard-view') renderDashboard();
-            if (viewId === 'tasks-view') renderTasksView(); // NEW
+            if (viewId === 'tasks-view') renderTasksView();
             if (viewId === 'my-surveys-view') renderProjects();
             if (viewId === 'project-detail-view') {
                 currentProjectId = param;
@@ -1520,16 +1508,16 @@
         function renderAssessmentDetailView(params) {
             const { siteCode } = params;
             // Find the assessment data - combining CSV and potentially other sources
-            const assessments = parseCsv(assessmentsCsvData);
-            const siteData = assessments.find(site => site.SITECODE == siteCode) || { SITE_NAME: 'Rossbehy', SITECODE: '13', Status: 'Completed', COUNTY: 'Kerry', HA: '91.71' }; // Use Rossbehy as default/fallback
+            const assessments = parseCsv(sacConditionsCsv).concat(parseCsv(spaConditionsCsv)).concat(parseCsv(nhaConditionsCsv));
+            const siteData = assessments.find(site => site.Sitecode == siteCode) || { SiteName: 'Rossbehy', Sitecode: '13', Status: 'Completed', COUNTY: 'Kerry', HA: '91.71' }; // Use Rossbehy as default/fallback
 
-            document.getElementById('assessment-site-name').textContent = siteData.SITE_NAME;
-            document.getElementById('assessment-site-code').textContent = `Site Code: ${siteData.SITECODE}`;
-            document.getElementById('assessment-county').textContent = siteData.COUNTY;
-            document.getElementById('assessment-area').textContent = siteData.HA;
+            document.getElementById('assessment-site-name').textContent = siteData.SiteName;
+            document.getElementById('assessment-site-code').textContent = `Site Code: ${siteData.Sitecode}`;
+            document.getElementById('assessment-county').textContent = siteData.COUNTY || 'N/A';
+            document.getElementById('assessment-area').textContent = siteData.HA || 'N/A';
             
             const statusBadge = document.getElementById('assessment-status-badge');
-            statusBadge.textContent = siteData.Status;
+            statusBadge.textContent = siteData.Status || 'Unknown';
             statusBadge.className = `status-badge ${getStatusColorClass(siteData.Status)}`;
 
             // --- Simulate Habitat and Species Data for Rossbehy ---
@@ -1825,8 +1813,8 @@
         }
 
         // --- TEMPLATE EDITOR ---
-        function addTemplateElement(editorId, type) {
-            const editor = document.getElementById(editorId);
+        function addTemplateElement(type) {
+            const editor = document.getElementById('custom-template-editor');
             const newElement = document.createElement(type === 'heading' ? 'h4' : 'p');
             newElement.setAttribute('contenteditable', 'true');
             if (type === 'heading') {
@@ -1836,16 +1824,7 @@
                 newElement.className = 'text-gray-700 focus:outline-none p-2 rounded-md';
                 newElement.textContent = 'New editable paragraph. Start typing...';
             }
-            
-            // If inside a sub-section container, add it there
-            const subSection = editor.querySelector('.space-y-6');
-            if(subSection) {
-                 const newSection = document.createElement('div');
-                 newSection.appendChild(newElement);
-                 subSection.appendChild(newSection);
-            } else {
-                 editor.appendChild(newElement);
-            }
+            editor.appendChild(newElement);
             newElement.focus();
         }
 
@@ -1874,7 +1853,8 @@
             destroyCharts(); // Clear old charts before rendering new ones
             renderStatusChart('actions-chart', 'Action Status', [5, 3, 8, 12]); // Example data
             renderStatusChart('surveys-chart', 'Assessment Status', [3, 1, 2, 8]); // Updated data
-            renderCsvData('assessments-table', 'actions-table');
+            renderSiteStatusTabs();
+            renderSiteStatusTabContent();
         }
 
         function destroyCharts() {
@@ -1899,6 +1879,7 @@
                 },
                  options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12 } },
                         tooltip: {
@@ -1932,32 +1913,34 @@
             });
         }
         
+        // --- CSV DATA ---
+        const sacConditionsCsv = `Site Name ,Site code,Last Upate ,Habitats Health ,Species Health 
+River Barrow and River Nore SAC,2162,June 2025,Inadequate,Bad
+Hook Head SAC,764,January 2025,Favourable,Favourable
+Belgica Mound Province SAC,2327,January 2025,Inadequate,Inadequate
+West Connacht Coast SAC,2998,January 2025,Bad,Favourable
+Codling Fault Zone SAC,3015,January 2025,Favourable,Inadequate
+Lambay Island SAC,204,December 2024,Bad,Bad`;
+
+        const spaConditionsCsv = `Site Name ,Site Code ,Last Updated,Habitats Health ,Species Health 
+Lady's Island Lake SPA,4009,July 2025,Favourable,Favourable
+Termoncarragh Lake and Annagh Machair SPA,4093,June 2025,Inadequate,Favourable
+Inishmore SPA,4152,June 2025,Bad,Bad
+Dingle Peninsula SPA,4153,June 2025,Favourable,Inadequate
+Horn Head to Fanad Head SPA,4194,June 2025,Inadequate,Inadequate
+Cliffs of Moher SPA,4005,June 2025,Favourable,Favourable`;
+        
+        const nhaConditionsCsv = `Site Name ,Site Code ,Last Updated,Habitats Health ,Species Health 
+Slieve Rushen Bog NHA,9,Not Assigned,Cavan,674.7
+Inishduff NHA,151,Pending,Donegal,46.5
+Roaninish NHA,184,In Progress,Donegal,145.8
+Lough Namucka Bog NHA,220,Completed,Galway,221.0`;
+
         const assessmentsCsvData = `SITECODE,SITE_NAME,Status,COUNTY,HA,Link to Survey 
 9,Slieve Rushen Bog NHA,Not Assigned,Cavan,674.7,https://www.npws.ie/protected-sites/nha/000009
 151,Inishduff NHA,Pending,Donegal,46.5,https://www.npws.ie/protected-sites/nha/000151
 184,Roaninish NHA,In Progress,Donegal,145.8,https://www.npws.ie/protected-sites/nha/000184
-220,Lough Namucka Bog NHA,Completed,Galway,221.0,https://www.npws.ie/protected-sites/nha/000220
-6, Killyconny Bog (Cloghbally) SAC,Pending, Cavan, 284,
-7, Lough Oughter and Associated Loughs SAC, Completed, Galway, 898,
-4, Ballyallia Lake SAC, Completed, Galway, 897,
-10, Ballycullinan Lake SAC, Completed, Galway, 798, 
-20, Black Head/Poulsallagh Complex, Completed, Donegal,199,
-90, Danes Hole Poulnalecka SAC, Completed, Mayo, 7889
-32, Dromore Woods & Loughs, Completed, Cork, 8978,
-37, Pouladatig Cave 1999,  Completed, Cork, 879,
-51, Lough Gash Turlough SAC, Completed, Cork, 878,
-54, Moneen Mountain 1997, Completed, Limerick, 9889,
-57, Moyree River System, Completed, Cork, 878,
-64, Poulnagordon Cave (Quin) SAC, Completed, Cork, 878,
-77, Ballymacoda(Clonpriest and Pillmore)SAC, Completed, Cork, 7768,
-90, Glengarriff Harbour and Woodland, Completed, Cork, 756,
-91, Clonakilty Bay SAC, Completed, Mayo, 435,
-93, Caha Mountains SAC, Completed, Donegal, 426,
-97, Lough Hyne Nature Reserve and Environs SAC, Completed, Sligo, 549,
-101, Roaringwater Bay and Islands SAC, Completed, Sligo,470,
-106, St. Gobnet's Wood SAC, Completed, Donegal,216,
-109, Three Castle Head to Mizen Head, Completed, Donegal,540,
-111, Aran Island (Donegal) Cliffs SAC, Completed, Donegal, 613`;
+220,Lough Namucka Bog NHA,Completed,Galway,221.0,https://www.npws.ie/protected-sites/nha/000220`;
         
        const actionsCsvData = `SITECODE,SITE_NAME,Status,COUNTY,Action Type,Link to Survey
 245,Clooncullaun Bog NHA,In Progress,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000245
@@ -1969,38 +1952,15 @@
 280,Castle Ffrench West Bog NHA,Not Assigned,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000280
 281,Keeloges Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000281
 283,Kilmore Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000283
-284,Kilnaborris Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000284
-6, Killyconny Bog (Cloghbally) SAC, Completed,Cavan, Site and habitat management,
-7, Lough Oughter and Associated Loughs SAC, Completed, Galway, Site and habitat management,
-4, Ballyallia Lake SAC, Completed,Galway, Site and habitat management,
-10, Ballycullinan Lake SAC, Completed, Galway,  Site and habitat management,
-20, Black Head/Poulsallagh Complex, Completed, Donegal,Site and habitat management,
-90, Danes Hole Poulnalecka SAC, Completed, Mayo, Site and habitat management,
-32, Dromore Woods & Loughs, Completed, Cork, Site and habitat management,
-37, Pouladatig Cave 1999,  Completed, Cork, Site and habitat management,
-51, Lough Gash Turlough SAC, Completed, Cork,Site and habitat management,
-54, Moneen Mountain 1997, Completed, Limerick, Site and habitat management,
-57, Moyree River System, Completed,Cork,Site and habitat management,
-64, Poulnagordon Cave (Quin) SAC, Completed, Cork, Site and habitat management,
-77, Ballymacoda(Clonpriest and Pillmore)SAC, Completed,Cork,  Site and habitat management,
-90, Glengarriff Harbour and Woodland, Completed,Cork, Site and habitat management,
-91, Clonakilty Bay SAC, Completed, Mayo, Site and habitat management,
-93, Caha Mountains SAC, Completed, Donegal, Site and habitat management,
-97, Lough Hyne Nature Reserve and Environs SAC,Completed, Sligo,  Site and habitat management,
-101, Roaringwater Bay and Islands SAC, Completed, Sligo,Site and habitat management,
-106, St. Gobnet's Wood SAC, Completed,Donegal,Site and habitat management
-109, Three Castle Head to Mizen Head, Completed, Donegal,Site and habitat management,
-111, Aran Island (Donegal) Cliffs SAC, Completed,Donegal,Site and habitat management,`;
+284,Kilnaborris Bog NHA,Pending,Galway,Site and habitat management,https://www.npws.ie/protected-sites/nha/000284`;
         
         function parseCsv(csvString) {
             const rows = csvString.trim().split('\n');
-            const headers = rows.shift().split(',').map(h => h.trim());
+            const headers = rows.shift().split(',').map(h => h.trim().replace(/\s+/g, ''));
             return rows.map(row => {
                 const values = row.split(',');
                 return headers.reduce((obj, header, index) => {
-                    // Standardize header names slightly for easier access
-                    const cleanHeader = header.replace(/\s+/g, '').replace('LinktoSurvey', 'Link');
-                    obj[cleanHeader] = values[index] ? values[index].trim() : '';
+                    obj[header] = values[index] ? values[index].trim() : '';
                     return obj;
                 }, {});
             });
@@ -2015,57 +1975,120 @@
             if (lowerStatus === 'not assigned') return 'bg-gray-100 text-gray-800';
             return 'bg-gray-100 text-gray-800';
         }
-
-
-        function renderCsvData(assessmentsTableId, actionsTableId) {
-            let assessmentsData = parseCsv(assessmentsCsvData);
-            let actionsData = parseCsv(actionsCsvData);
-            
-            // Add Rossbehy data manually
-            const rossbehyAssessment = {
-                SITECODE: '13',
-                SITE_NAME: 'Rossbehy',
-                Status: 'Completed',
-                COUNTY: 'Kerry',
-                HA: '91.71', // From docx
-                Link: '#' // Placeholder link
-            };
-            // Check if Rossbehy already exists to avoid duplicates on re-render
-            if (!assessmentsData.some(item => item.SITECODE === '13')) {
-                assessmentsData.push(rossbehyAssessment);
-            }
-            
-            const assessmentsTable = document.getElementById(assessmentsTableId);
-            if (assessmentsTable) { // Check if the element exists
-                assessmentsTable.innerHTML = assessmentsData.map(row => `
-                    <tr class="${row.SITECODE == '13' ? 'cursor-pointer hover:bg-gray-50' : ''}" ${row.SITECODE == '13' ? `onclick="showView('assessment-detail-view', { siteCode: 13 })"` : ''}>
-                        <td class="p-2">${row.SITECODE}</td>
-                        <td class="p-2">${row.SITE_NAME}</td>
-                        <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
-                        <td class="p-2">${row.COUNTY}</td>
-                        <td class="p-2 text-right">${row.HA}</td>
-                    </tr>`).join('');
-            }
-            
-            const actionsTable = document.getElementById(actionsTableId);
-            if (actionsTable) { // Check if the element exists
-                actionsTable.innerHTML = actionsData.map(row => `
-                    <tr>
-                         <td class="p-2">${row.SITECODE}</td>
-                        <td class="p-2">${row.SITE_NAME}</td>
-                        <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
-                        <td class="p-2">${row['ActionType']}</td>
-                        <td class="p-2">${row.COUNTY}</td>
-                    </tr>`).join('');
-            }
+        
+        function getStatusDot(status) {
+            if (!status) return '<span class="w-3 h-3 rounded-full bg-gray-400 block mx-auto"></span>';
+            const lowerStatus = status.toLowerCase();
+            if (lowerStatus.includes('favourable')) return '<span class_name="w-3 h-3 rounded-full bg-status-favourable block mx-auto"></span>';
+            if (lowerStatus.includes('inadequate')) return '<span class="w-3 h-3 rounded-full bg-status-inadequate block mx-auto"></span>';
+            if (lowerStatus.includes('bad')) return '<span class="w-3 h-3 rounded-full bg-status-bad block mx-auto"></span>';
+            return '<span class="w-3 h-3 rounded-full bg-gray-400 block mx-auto"></span>';
         }
         
-        // --- NEW TASKS VIEW ---
+        function generateRandomConservationString() {
+            const statuses = ['Favourable', 'Inadequate', 'Bad'];
+            const randStatus = () => statuses[Math.floor(Math.random() * 3)];
+            const statusColor = (status) => {
+                if (status === 'Favourable') return 'text-status-favourable';
+                if (status === 'Inadequate') return 'text-status-inadequate';
+                return 'text-status-bad';
+            };
+            
+            let s1 = randStatus();
+            let s2 = randStatus();
+            let s3 = randStatus();
+            let s4 = randStatus();
+
+            return `
+                <div class="text-xs space-y-1">
+                    <div>Range: <span class="font-medium ${statusColor(s1)}">${s1}</span></div>
+                    <div>Area: <span class="font-medium ${statusColor(s2)}">${s2}</span></div>
+                    <div>Structure & Functions: <span class="font-medium ${statusColor(s3)}">${s3}</span></div>
+                    <div>Future Prospects: <span class="font-medium ${statusColor(s4)}">${s4}</span></div>
+                </div>
+            `;
+        }
+
+        // --- DASHBOARD: SITE STATUS ---
+        function renderSiteStatusTabs() {
+            const tabs = [
+                { id: 'sac', name: 'SAC' },
+                { id: 'spa', name: 'SPA' },
+                { id: 'nha', name: 'NHA' }
+            ];
+            const tabsContainer = document.getElementById('site-status-tabs');
+            tabsContainer.innerHTML = tabs.map(tab => `
+                <button onclick="setSiteStatusTab('${tab.id}')" class="${currentSiteStatusTab === tab.id ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    ${tab.name}
+                </button>
+            `).join('');
+        }
+
+        function setSiteStatusTab(tabId) {
+            currentSiteStatusTab = tabId;
+            renderSiteStatusTabs();
+            renderSiteStatusTabContent();
+        }
+
+        function renderSiteStatusTabContent() {
+            const content = document.getElementById('site-status-content');
+            let csvData;
+            if (currentSiteStatusTab === 'sac') {
+                csvData = parseCsv(sacConditionsCsv);
+            } else if (currentSiteStatusTab === 'spa') {
+                csvData = parseCsv(spaConditionsCsv);
+            } else {
+                csvData = parseCsv(nhaConditionsCsv);
+            }
+            
+            let stats = { favourable: 0, unfavourable: 0, speciesFavourable: 0, total: csvData.length };
+            csvData.forEach(row => {
+                if (row.HabitatsHealth?.toLowerCase().includes('favourable')) stats.favourable++;
+                if (row.HabitatsHealth?.toLowerCase().includes('inadequate') || row.HabitatsHealth?.toLowerCase().includes('bad')) stats.unfavourable++;
+                if (row.SpeciesHealth?.toLowerCase().includes('favourable')) stats.speciesFavourable++;
+            });
+            
+            document.getElementById('total-assessments-stat').textContent = stats.total;
+            document.getElementById('habitats-favourable-stat').textContent = stats.favourable;
+            document.getElementById('habitats-unfavourable-stat').textContent = stats.unfavourable;
+            document.getElementById('species-favourable-stat').textContent = stats.speciesFavourable;
+
+            content.innerHTML = `
+                <div class="h-96 overflow-y-auto pr-2">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="p-2 font-semibold">Site Code</th>
+                                <th class="p-2 font-semibold">Site Name</th>
+                                <th class="p-2 font-semibold">Habitats Health</th>
+                                <th class="p-2 font-semibold">Species Health</th>
+                                <th class="p-2 font-semibold">Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${csvData.map(row => {
+                                return `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-2">${row.Sitecode}</td>
+                                    <td class="p-2">${row.SiteName}</td>
+                                    <td class="p-2">${generateRandomConservationString()}</td>
+                                    <td class="p-2">${generateRandomConservationString()}</td>
+                                    <td class="p-2">${row.LastUpate || row.LastUpdated || 'N/A'}</td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // --- TASKS PAGE ---
         function renderTasksView() {
+            currentTasksTab = 'assessments'; // Default to first tab
             renderTasksTabs();
             renderTasksTabContent();
         }
-
+        
         function renderTasksTabs() {
              const tabs = [
                 { id: 'assessments', name: 'Conservation Assessments' },
@@ -2086,12 +2109,17 @@
         }
 
         function renderTasksTabContent() {
-            const contentContainer = document.getElementById('tasks-tab-content');
+            const content = document.getElementById('tasks-content');
             if (currentTasksTab === 'assessments') {
-                contentContainer.innerHTML = `
+                let assessmentsData = parseCsv(assessmentsCsvData);
+                const rossbehyAssessment = { SITECODE: '13', SITE_NAME: 'Rossbehy', Status: 'Completed', COUNTY: 'Kerry', HA: '91.71', Link: '#' };
+                if (!assessmentsData.some(item => item.SITECODE === '13')) {
+                    assessmentsData.push(rossbehyAssessment);
+                }
+                
+                content.innerHTML = `
                     <div class="bg-surface p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-bold text-secondary mb-4">Conservation Assessments</h3>
-                        <div class="h-[calc(100vh-18rem)] overflow-y-auto pr-2">
+                        <div class="h-[60vh] overflow-y-auto pr-2">
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-gray-50 sticky top-0">
                                     <tr>
@@ -2102,16 +2130,25 @@
                                         <th class="p-2 font-semibold text-right">Area (ha)</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tasks-assessments-table" class="divide-y divide-gray-200"></tbody>
+                                <tbody class="divide-y divide-gray-200">
+                                ${assessmentsData.map(row => `
+                                    <tr class="${row.SITECODE == '13' ? 'cursor-pointer hover:bg-gray-50' : ''}" ${row.SITECODE == '13' ? `onclick="showView('assessment-detail-view', { siteCode: 13 })"` : ''}>
+                                        <td class="p-2">${row.SITECODE}</td>
+                                        <td class="p-2">${row.SITE_NAME}</td>
+                                        <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
+                                        <td class="p-2">${row.COUNTY}</td>
+                                        <td class="p-2 text-right">${row.HA}</td>
+                                    </tr>`).join('')}
+                                </tbody>
                             </table>
                         </div>
-                    </div>`;
-                renderCsvData('tasks-assessments-table', null); // Only render assessments
+                    </div>
+                `;
             } else if (currentTasksTab === 'actions') {
-                contentContainer.innerHTML = `
+                 let actionsData = parseCsv(actionsCsvData);
+                 content.innerHTML = `
                     <div class="bg-surface p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-bold text-secondary mb-4">Conservation Actions</h3>
-                         <div class="h-[calc(100vh-18rem)] overflow-y-auto pr-2">
+                         <div class="h-[60vh] overflow-y-auto pr-2">
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-gray-50 sticky top-0">
                                     <tr>
@@ -2119,14 +2156,23 @@
                                         <th class="p-2 font-semibold">Site Name</th>
                                         <th class="p-2 font-semibold">Status</th>
                                         <th class="p-2 font-semibold">Action Type</th>
-                                        <th class="p-2 font-semibold">County</th>
+                                        <th classs="p-2 font-semibold">County</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tasks-actions-table" class="divide-y divide-gray-200"></tbody>
+                                <tbody class="divide-y divide-gray-200">
+                                 ${actionsData.map(row => `
+                                    <tr>
+                                         <td class="p-2">${row.SITECODE}</td>
+                                        <td class="p-2">${row.SITE_NAME}</td>
+                                        <td class="p-2"><span class="status-badge ${getStatusColorClass(row.Status)}">${row.Status}</span></td>
+                                        <td class="p-2">${row.ActionType}</td>
+                                        <td class="p-2">${row.COUNTY}</td>
+                                    </tr>`).join('')}
+                                </tbody>
                             </table>
                         </div>
-                    </div>`;
-                renderCsvData(null, 'tasks-actions-table'); // Only render actions
+                    </div>
+                `;
             }
         }
 
@@ -2470,4 +2516,5 @@
     </script>
 </body>
 </html>
+
 
